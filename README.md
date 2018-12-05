@@ -1,4 +1,4 @@
-# Summer 1.0
+# Summer
 这是一个支持分布式和集群的java游戏服务器框架，可用于开发棋牌、回合制等游戏。基于netty实现高性能通讯，支持tcp、http、websocket等协议。支持消息加解密、攻击拦截、黑白名单机制。封装了redis缓存、mysql数据库的连接与使用。轻量级，便于上手。
 
 ## 目录
@@ -136,7 +136,7 @@ maxPoolPreparedStatementPerConnectionSize=200
 ```
 
 ##### redis.properties (jedis配置文件)
-```
+```properties
 url=127.0.0.1
 port=6379
 timeout=3000
@@ -151,7 +151,7 @@ testOnBorrow=true
 ```
 
 ##### log.properties (log4j配置文件)
-```
+```properties
 log4j.rootLogger=DEBUG,C
 log4j.logger.org.quartz=OFF
 log4j.logger.com.alibaba.druid=DEBUG
@@ -171,7 +171,7 @@ log4j.appender.F.layout.ConversionPattern=%-d{yyyy-MM-dd HH\:mm\:ss\:SSS} [%t] %
 ```
 
 ##### task.properties (quartz配置文件)
-```
+```properties
 org.quartz.scheduler.instanceName=Task
 org.quartz.scheduler.rmi.export=false
 org.quartz.scheduler.rmi.proxy=false
@@ -185,7 +185,7 @@ org.quartz.jobStore.class=org.quartz.simpl.RAMJobStore
 ```
 
 ##### server.properties (服务器配置文件)
-```
+```properties
 #服务器集群名称
 server.cluster=Gate
 #服务器节点名称
@@ -298,7 +298,7 @@ javabean、数据表的实体映射
 
 #### manager
 对象管理，使用时在类上方使用注解@Bean
-```
+```java
 @Bean
 public class LoginManager {
 
@@ -316,7 +316,7 @@ public class LoginManager {
 
 #### dao
 数据库操作，类需继承BaseDao并使用注解@Dao
-```
+```java
 @Dao
 public class AccountDao extends BaseDao<Account> {
 
@@ -327,7 +327,7 @@ public class AccountDao extends BaseDao<Account> {
 }
 ```
 
-```
+```java
 public abstract class BaseDao<T> {
 
     protected int update(String sql, Object... args){}
@@ -346,7 +346,7 @@ public abstract class BaseDao<T> {
 
 #### service
 业务处理，使用时在类上方使用注解@Service<br/>
-```
+```java
 @Service
 public class AccountService {
 
@@ -364,7 +364,7 @@ public class AccountService {
 事件处理器，使用时在类上方使用注解@EventHandler<br/>
 在对应方法上方使用注解@BindEvent，参数为监听的事件的名称。也可使用@BindEvent(value = "事件名称", index = 1)，index表示同名事件处理器的先后顺序，index小到大，顺序先到后。<br/>
 如果该方法的返回值不为viod、null，则表示对该事件进行拦截，因此后面的事件处理器便不会收到通知。
-```
+```java
 @EventHandler
 public class FriendEvent {
 
@@ -377,7 +377,7 @@ public class FriendEvent {
 #### handler
 服务器会话回调，类需实现SessionHandler并使用注解@ServerHandler<br/>
 此组件主要用于网关服务器，可对用户的连接和请求进行拦截或其他处理
-```
+```java
 @ServerHandler
 public class LoginHandler implements SessionHandler {
 	
@@ -441,7 +441,7 @@ public class LoginHandler implements SessionHandler {
 #### push
 推送接口，使用时在类上方使用注解@Push<br/>
 用于将消息推送给连接本服务器的其他服务器或客户端
-```
+```java
 @Push
 public class DataPush {
 	
@@ -455,7 +455,7 @@ public class DataPush {
 远程调用接口，使用时在类上方使用注解@Remote<br/>
 SessionContext为调用此接口的会话，此参数可省略。<br/>
 除了标记@Optional的参数外，皆为必填参数，如有遗漏会抛出异常。
-```
+```java
 @Remote
 public class AccountRemote {
 
@@ -474,7 +474,7 @@ public class AccountRemote {
 在对应的方法上方添加注解@CronTask、@IntervalTask，即表示该方法为一个任务。<br/>
 @CronTask("cron 表达式")当时间满足cron表达式时执行该方法<br/>
 @IntervalTask(1000)每隔1000毫秒执行该方法，或使用@IntervalTask(value = 1000, delay = 2000)2000毫秒后执行该方法，然后每隔1000毫秒执行该方法。
-```
+```java
 @Task
 public class StatTask {
 
@@ -499,7 +499,7 @@ public class StatTask {
 #### app
 app启动类，此类需实现SummerApp且添加程序入口main方法，并在main方法中调用启动框架。<br/>
 Summer.hot会在后面提到。
-```
+```java
 public class SupmersGateApp implements SummerApp {
 
 	private static final Logger log = LoggerFactory.getLogger(SupmersGateApp.class);
@@ -579,7 +579,7 @@ task 由任务处理器调用
 #### @Autowired
 在使用@Service、@Remote、@Push、@Task、@ServerHandler、@EventHandler这些注解的类中，其字段如果使用此注解，即可实现自动注入，注入的对象由容器提供。<br/>
 组件中只有@Bean、@Dao、@Service支持被注入。
-```
+```java
 @Remote
 public class AccountRemote {
 
@@ -604,7 +604,7 @@ public class AccountRemote {
 #### @Synchronized
 在使用@Service、@Remote、@Task、@EventHandler这些注解的类中，其方法如果使用此注解，即可为该方法上分布式锁。当该方法被调用时，会尝试获取锁，一直等到获取成功，执行完方法或抛异常会自动释放锁。<br/>
 此锁适用于多服务器同步。
-```
+```java
 @Remote
 public class ShopRemote {
     
@@ -616,7 +616,7 @@ public class ShopRemote {
 
 #### @SingleQueue
 在使用@Remote注解的类中，其方法如果使用此注解，在多个线程调用此方法是，会排进指定的队列中，依次完成调用。
-```
+```java
 @Remote
 public class StatRemote {
     
@@ -627,7 +627,7 @@ public class StatRemote {
 
 #### @SessionQueue
 在使用@Remote注解的类中，其方法如果使用此注解，在多个线程调用此方法是，会排进当前请求者的会话队列中，依次完成调用。
-```
+```java
 @Remote
 public class ItemRemote {
     
@@ -638,7 +638,7 @@ public class ItemRemote {
 
 #### @Optional
 在使用@Remote注解的类中，其方法参数如果使用此注解，即视为选填参数。
-```
+```java
 @Remote
 public class AccountRemote {
 
@@ -648,7 +648,7 @@ public class AccountRemote {
 ```
 #### @Transaction
 在使用@Remote、@Task、@EventHandler这些注解的类中，其方法如果使用此注解，即可开启mysql事务管理，方法执行完则提交事务，如抛出异常则回滚事务。
-```
+```java
 @Remote
 public class FriendRemote {
 
@@ -661,7 +661,7 @@ public class FriendRemote {
 #### @CronTask
 在使用@Task注解的类中，其方法参数如果使用此注解，即视为定时任务。<br/>
 @CronTask("cron 表达式")
-```
+```java
 @Task
 public class StatTask {
 
@@ -674,7 +674,7 @@ public class StatTask {
 在使用@Task注解的类中，其方法参数如果使用此注解，即视为间隔任务。<br/>
 @IntervalTask(1000) 立即执行并每1000毫秒再执行。<br/>
 @IntervalTask(value = 1000, delay = 2000) 等待2000毫秒执行并每1000毫秒再执行。<br/>
-```
+```java
 @Task
 public class StatTask {
 	
@@ -691,7 +691,7 @@ public class StatTask {
 @BindEvent("事件名称")<br/>
 @BindEvent(value = "事件名称", index = 1) index表示同名事件处理器的先后顺序，
 index小到大，顺序先到后。
-```
+```java
 @EventHandler
 public class FriendEvent {
 
@@ -709,7 +709,7 @@ public class FriendEvent {
 
 #### Summer.hot
 Summer框架启动方法
-```
+```java
 public static void hot(SummerApp app) throws Exception {}
 public static void hot(SummerApp app, String projectPackage) throws Exception {}
 public static void hot(SummerApp app, String projectPackage, String libPath,
@@ -719,41 +719,41 @@ public static void hot(SummerApp app, String projectPackage, String libPath,
 
 #### Summer.sync
 分布式锁
-```
+```java
 public static void sync(String key, Runnable runnable) {}
 ```
 
 #### Summer.execute
 队列处理
-```
+```java
 public static void execute(Object key, Runnable runnable) {}
 ```
 
 #### Summer.addComponent
 添加组件到容器
-```
+```java
 public static void addComponent(Object obj) {}
 ```
 
 #### Summer.removeComponent
 从容器中移除组件
-```
+```java
 public static void removeComponent(Object obj) {}
 ```
 
 #### Summer.getComponent
 从容器中获取组件
-```
+```java
 public static <T> T getComponent(Class<?> clazz) {}
 ```
 
 #### Summer.getProxyInstance
 创建代理对象
-```
+```java
 public static <T> T getProxyInstance(Object target, ProxyMethodInterceptor interceptor) {}
 ```
 
-```
+```java
 public interface ProxyMethodInterceptor {
 
 	public Object intercept(Object obj, Method method, Object[] args) throws Throwable;
@@ -763,47 +763,47 @@ public interface ProxyMethodInterceptor {
 
 #### Summer.autowired
 组件注入，为目标对象中使用@Autowired注解的字段，进行对象注入。
-```
+```java
 public static void autowired(Object obj) {}
 ```
 
 #### Summer.getRedisSource
 获取Redis源，可用于操作Redis。
-```
+```java
 public static RedisSource getRedisSource() {}
 ```
 
 #### Summer.getIntervalTask
 创建间隔任务
-```
+```java
 public static TaskTrigger getIntervalTask(long interval, long delay, String taskName, TaskJob taskJob) {}
 ```
 
 #### Summer.getCronTask
 创建定时任务
-```
+```java
 public static TaskTrigger getCronTask(String cron, String taskName, TaskJob taskJob) {}
 ```
 
 #### Summer.startTask
 开始任务
-```
+```java
 public static void startTask(TaskTrigger taskTrigger) {}
 ```
 
 #### Summer.stopTask
 停止任务
-```
+```java
 public static void stopTask(TaskTrigger taskTrigger) {}
 ```
 
 #### Summer.getClientRemote
 通过集群名称和服务器节点名称获取连接其他服务器的远程调用接口对象
-```
+```java
 public static ClientRemote getClientRemote(String cluster, String name) {}
 ```
 
-```
+```java
 public class ClientRemote {
 
     //异步调用远程接口
@@ -817,24 +817,24 @@ public class ClientRemote {
 
 #### Summer.getRandomClientRemote
 通过集群名称，随机获取连接其他服务器的远程调用接口对象
-```
+```java
 public static ClientRemote getRandomClientRemote(String cluster) {}
 ```
 
 #### Summer.getRemoteInvokeObject
 通过集群名称和服务器节点名称获取连接其他服务器的远程调用接口代理对象
-```
+```java
 public static <T> T getRemoteInvokeObject(String cluster, String name, Class<?> clazz) {}
 ```
 
 #### Summer.getRandomRemoteInvokeObject
 通过集群名称，随机获取连接其他服务器的远程调用接口代理对象
-```
+```java
 public static <T> T getRandomRemoteInvokeObject(String cluster, Class<?> clazz) {}
 ```
 
 ##### 账号服务器
-```
+```java
 @Remote
 public class FriendRemote {
 	@Autowired
@@ -847,7 +847,7 @@ public class FriendRemote {
 }
 ```
 
-```
+```java
 public class AccountServerRemote {
     public static FriendRemote getFriendRemote() {
 		return Summer.getRandomRemoteInvokeObject(ClusterConst.ACCOUNT, FriendRemote.class);
@@ -857,7 +857,7 @@ public class AccountServerRemote {
 
 ##### 网关服务器
 将账号服务器的jar包引入网关服务器中，即可像调用本地方法一样调用远程接口。
-```
+```java
 @Remote
 public class FriendRemote {
 
@@ -874,11 +874,11 @@ public class FriendRemote {
 
 #### Summer.getServerPush
 获取服务器推送接口对象
-```
+```java
 public static ServerPush getServerPush() {}
 ```
 
-```
+```java
 public class ServerPush {
 	
 	//异步推送至该集群内所有服务器
@@ -922,49 +922,49 @@ public class ServerPush {
 
 #### Summer.closeSession
 关闭会话
-```
+```java
 public static void closeSession(SessionContext sctx) {}
 ```
 
 #### Summer.createCodeException
 创建错误码异常对象
-```
+```java
 public static CodeException createCodeException(long code, String msg) {}
 public static CodeException createCodeException(CodeMsg msg, Object ...args) {}
 ```
 #### Summer.createCodeMsg
 创建错误码消息
-```
+```java
 public static CodeMsg createCodeMsg(long code, String msg) {
 ```
 
 #### Summer.getCluster
 获取集群名称
-```
+```java
 public static String getCluster() {}
 ```
 
 #### Summer.getServerName
 获取服务器节点名称
-```
+```java
 public static String getServerName() {}
 ```
 
 #### Summer.syncDispatch
 同步发送消息事件
-```
+```java
 public static void syncDispatch(String eventName, Object ...args) {}
 ```
 
 #### Summer.asyncDispatch
 异步发送消息事件
-```
+```java
 public static void asyncDispatch(String eventName, Object ...args) {}
 ```
 
 #### Summer.getWeb
 获取Web相关接口
-```
+```java
 public static WebMgr getWeb() {}
 ```
 
@@ -984,7 +984,7 @@ public static WebMgr getWeb() {}
 
 #### 自定义 Error Code
 ##### 异常声明
-```
+```java
 public class AccountException {
 
     /**金币不足*/
@@ -994,7 +994,7 @@ public class AccountException {
 ```
 ##### 异常使用
 建议只在remote和service中使用
-```
+```java
 @Service
 public class AccountService {
 
@@ -1019,7 +1019,7 @@ public class AccountService {
 ### 协议介绍
 #### 消息定义
 ##### 请求消息
-```
+```json
 {"id": 0, "remote": null, "method": null, "data": {}}
 ```
 id 由客户端不断递增，由1开始<br/>
@@ -1028,7 +1028,7 @@ method 远程方法 -> 方法名<br/>
 data 数据 -> 方法参数名与值<br/>
 
 ##### 响应消息
-```
+```json
 {"code": 0, "id": 0, "remote": null, "method": null, "data": null, "time": 0}
 ```
 code 错误码，为0标识无异常<br/>
@@ -1039,7 +1039,7 @@ data 返回的数据<br/>
 time 时间戳<br/>
 
 ##### 推送消息
-```
+```json
 {"code": 0, "id": 0, "remote": null, "method": null, "data": null, "time": 0}
 ```
 code 为0<br/>
@@ -1051,28 +1051,28 @@ time 时间戳<br/>
 
 #### StringLine协议
 本协议支持加解密，支持服务器之间使用。消息格式为字符串，在字符串末尾加入\r\n，因此通过判断分隔符\r\n来区分消息。
-```
+```properties
 #通讯协议
 server.protocol=StringLine
 ```
 
 #### WebSocket协议
 本协议支持加解密，基于WebSocket协议。消息格式为二进制，数据包分为包头和包体，包头占四个字节，用来表示包体的长度。
-```
+```properties
 #通讯协议
 server.protocol=WebSocket
 ```
 
 #### LengthField协议
 本协议支持加解密，支持服务器之间使用。消息格式为二进制，数据包分为包头和包体，包头占四个字节，用来表示包体的长度。
-```
+```properties
 #通讯协议
 server.protocol=LengthField
 ```
 
 #### Http协议
 本协议不支持加解密，基于Http协议。
-```
+```java
 @Remote
 public class TestRemote {
     
@@ -1088,14 +1088,14 @@ public class TestRemote {
 http://127.0.0.1:8080/TestRemote_test?msg=hello
 ```
 
-```
+```properties
 #通讯协议
 server.protocol=Http
 ```
 
 #### 消息加解密算法
 ##### WebSoccket与LengthField
-```
+```java
 byte[] bytes = new byte[0];
 String pass = "123456"; //密码由配置文件配置
 int index = bytes.length % 10;
@@ -1108,7 +1108,7 @@ for (int i = 0; i < bytes.length; i++) {
 }
 ```
 ##### StringLine
-```
+```java
 byte[] bytes = new byte[0];
 String pass = "123456"; //密码由配置文件配置
 int index = bytes.length % 10;
@@ -1125,7 +1125,7 @@ for (int i = 0; i < bytes.length; i++) {
 ### Web介绍
 
 #### Web配置管理
-```
+```java
 public class WebMgr {
 	
 	//重新加载模板
@@ -1169,7 +1169,7 @@ public class WebMgr {
 
 ##### 内部视图渲染工厂
 如需自定义空白视图或错误视图，只需继承此类覆盖相应的方法。
-```
+```java
 public class InteriorViewFactory {
 
     //空白视图
@@ -1186,25 +1186,25 @@ public class InteriorViewFactory {
 #### WebView视图渲染
 ##### TextView
 文字视图
-```
+```java
 new TextView(String text);
 ```
 
 ##### JSONView
 JSON视图
-```
+```java
 new JSONView(JSON json);
 ```
 
 ##### FileView
 文件视图
-```
+```java
 new FileView(String fileName);
 ```
 
 ##### ModelView
 模型视图
-```
+```java
 ModelView model = new ModelView(String view);
 model.put(String key, Object value);
 ```
@@ -1214,13 +1214,13 @@ value 值
 
 ##### BlankView
 空白视图
-```
+```java
 new BlankView();
 ```
 
 ##### ErrorView
 错误视图
-```
+```java
 new ErrorView(int status, long code, String msg);
 new ErrorView(int status, String msg);
 ```
@@ -1233,7 +1233,7 @@ msg 错误消息
 没有Web视图 not web view
 
 #### 数据提交
-```
+```java
 @Remote
 public class UserRemote {
     
@@ -1251,7 +1251,7 @@ public class UserRemote {
 http://127.0.0.1:8080/UserRemote_add?name=toke&age=22 //remark为选填
 ```
 ##### post
-```
+```html
 <form action="http://127.0.0.1:8080/UserRemote_add" method="post">
 	<input type="text" name="name"/>;
 	<input type="text" name="age"/>;
@@ -1261,7 +1261,7 @@ http://127.0.0.1:8080/UserRemote_add?name=toke&age=22 //remark为选填
 ```
 
 #### 上传文件
-```
+```java
 @Remote
 public class FileRemote {
     
@@ -1272,14 +1272,14 @@ public class FileRemote {
 }
 ```
 
-```
+```html
 <form action="http://127.0.0.1:8080/FileRemote_upload" method="post" enctype="multipart/form-data">
 	<input type="file" name="photo"/>;
 	<input class="button" type="submit"/>
 </form>
 ```
 
-```
+```java
 public class WebFileUpload {
 
     //获取文件名
@@ -1336,7 +1336,7 @@ public class WebFileUpload {
 ### 其他介绍
 #### 负载均衡
 随机远程调用和随机推送都是通过轮询实现
-```
+```java
     public Client getClientWithNext() {
 		int size = clientGroupList.size();
 		if (size > 0) {
@@ -1353,7 +1353,7 @@ public class WebFileUpload {
 
 #### Redis操作
 ##### RedisSource
-```
+```java
 public class RedisSource {
 	
 	//通过key获取value
@@ -1405,29 +1405,29 @@ public class RedisSource {
 
 ##### RedisMap
 封装了Redis的Hash
-```
+```java
 public class RedisMap implements Map<String, String> {}
 ```
 
 ##### RedisList
 封装了Redis的List
-```
+```java
 public class RedisList extends RedisCollection implements List<String> {}
 ```
 
 ##### RedisSet
 封装了Redis的Set
-```
+```java
 public class RedisSet implements Set<String> {}
 ```
 
 ##### RedisDeque
 封装了Redis的List
-```
+```java
 public class RedisDeque extends RedisCollection implements Deque<String> {}
 ```
 
 ##### RedisCollection
-```
+```java
 public abstract class RedisCollection implements Collection<String> {}
 ```
