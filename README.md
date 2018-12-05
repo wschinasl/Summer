@@ -116,7 +116,7 @@ public class SummerDemoApp implements SummerApp {
 - server.properties #服务器配置文件
 
 ##### db.properties (druid的配置文件)
-```
+```properties
 driverClassName=com.mysql.jdbc.Driver
 url=jdbc:mysql://127.0.0.1:3306/db_test?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
 username=root
