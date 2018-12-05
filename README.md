@@ -73,7 +73,7 @@ slf4j-log4j12-1.7.25.jar<br/>
   - SummerDemoApp.java #启动类
 
 ##### 启动类
-```
+```java
 package com.test.summerDemo;
 
 import com.swingfrog.summer.app.Summer;
