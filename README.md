@@ -20,6 +20,7 @@
 
 ## 前言
 
+
 ## 环境介绍与安装说明
 JDK 1.8 以上<br/>
 MySql 5.7 (仅供参考)<br/>
@@ -272,7 +273,6 @@ client.account_s2.connectNum=1
 
 #### 生产环境
 ##### 打包
-使用eclipse导出jar文件时，勾选Export all output folders for checked projects。<br/>
 在Options中勾选Add directory entries。<br/>
 注意，不要导出可运行的jar文件，因为会把lib中引用的jar和引用的库打包进jar中，造成jar体积巨大。
 ##### 项目结构
