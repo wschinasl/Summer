@@ -20,7 +20,7 @@ import com.swingfrog.summer.protocol.SessionResponse;
 import com.swingfrog.summer.server.exception.CodeException;
 import com.swingfrog.summer.server.exception.SessionException;
 import com.swingfrog.summer.web.WebRequest;
-import com.swingfrog.summer.web.exception.WebSessionException;
+import com.swingfrog.summer.web.view.TextView;
 import com.swingfrog.summer.web.view.WebView;
 
 import javassist.NotFoundException;
@@ -173,7 +173,7 @@ public class RemoteDispatchMgr {
 		if (obj instanceof WebView) {
 			return (WebView) obj;
 		} else {
-			throw new CodeException(WebSessionException.NOT_WEB_VIEW);
+			return new TextView(JSON.toJSONString(obj));
 		}
 	}
 	

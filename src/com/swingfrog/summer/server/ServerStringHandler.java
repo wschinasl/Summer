@@ -96,7 +96,7 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 		} else {
 			try {
 				SessionRequest request = JSON.parseObject(msg, SessionRequest.class);
-				if (request.getId() > sctx.getCurrentMsgId()) {
+				if (request.getId() != sctx.getCurrentMsgId()) {
 					sctx.setCurrentMsgId(request.getId());
 					log.debug("server request {} from {}", msg, sctx);
 					if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {

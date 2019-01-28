@@ -29,7 +29,7 @@ public class ClientRemote {
 		PushDispatchMgr.get().putAsyncRemote(sessionRequest.getId(), remoteCallback);
 		if (clientContext.getChannel() != null) {
 			String msg = sessionRequest.toJSONString();
-			log.debug("client request async {}", msg);
+			log.debug("client request serverName[{}] async {}", clientContext.getConfig().getServerName(), msg);
 			clientContext.getChannel().writeAndFlush(msg);
 		} else {
 			clientContext.getRequestQueue().add(sessionRequest);
@@ -45,7 +45,7 @@ public class ClientRemote {
 					SessionRequest sessionRequest = SessionRequest.buildRemote(
 							ClientMgr.get().incrementCurrentId(), remote, method, data);
 					String msg = sessionRequest.toJSONString();
-					log.debug("client request sync {}", msg);
+					log.debug("client request serverName[{}] sync {}", clientContext.getConfig().getServerName(), msg);
 					clientContext.getChannel().writeAndFlush(msg);
 					while (true) {
 						SessionResponse sessionResponse = PushDispatchMgr.get().getAndRemoveSyncRemote(sessionRequest.getId());
