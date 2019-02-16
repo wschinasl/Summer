@@ -23,7 +23,7 @@
 ## 更新
 ### 2019.02.17
 1. ClientRemote类，新增rsyncRemote方法，调用接口超时将自动重试直到成功为止。
-2. ClientRemote类，新增getServerName方法，可获取远程服务器节点名称。
+2. ClientRemote类，新增getServerName方法，用于获取连接其他服务器的节点名称。
 3. 新增Summer.getRemoteInvokeObjectWithRetry、Summer.getRandomRemoteInvokeObjectWithRetry，用于获取连接其他服务器的远程调用接口代理对象，超时将自动重试直到成功为止。
 
 ### 2019.01.28
