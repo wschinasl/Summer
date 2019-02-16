@@ -20,6 +20,10 @@ public class ClientRemote {
 		this.clientContext = clientContext;
 	}
 	
+	public String getServerName() {
+		return clientContext.getConfig().getServerName();
+	}
+	
 	public void asyncRemote(String remote, String method, Object data, RemoteCallback remoteCallback) {
 		if (remoteCallback == null) {
 			throw new NullPointerException("remoteCallback is null");
@@ -92,6 +96,16 @@ public class ClientRemote {
 			log.error(e.getMessage(), e);
 		}
 		return null;
+	}
+
+	public <T> T rsyncRemote(String remote, String method, Object data, Type type) {
+		while (true) {
+			try {				
+				return syncRemote(remote, method, data, type);
+			} catch (SyncRemoteTimeOutException e) {
+				log.error(e.getMessage(), e);
+			}
+		}
 	}
 	
 }

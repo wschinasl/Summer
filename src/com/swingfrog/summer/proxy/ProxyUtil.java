@@ -116,6 +116,27 @@ public class ProxyUtil {
 	}
 	
 	@SuppressWarnings("unchecked")
+	public static <T> T getProxyClientRemoteWithRetry(T remote, String cluster, String name) {
+		Object obj = ProxyFactory.getProxyInstance(remote, new ProxyMethodInterceptor() {
+			@Override
+			public Object intercept(Object obj, Method method, Object[] args) throws Exception {
+				Map<String, Object> map = new HashMap<>();
+				MehodParameterName mpn = new MehodParameterName(obj.getClass());
+				String[] params = mpn.getParameterNameByMethod(method);
+				for (int i = 0; i < params.length; i ++) {
+					map.put(params[i], args[i]);
+				}
+				ClientRemote clientRemote = ClientMgr.get().getClientRemote(cluster, name);
+				if (clientRemote == null) {
+					throw new CreateRemoteFailException("clientRemote is null");
+				}
+				return clientRemote.rsyncRemote(obj.getClass().getSimpleName(), method.getName(), map, method.getGenericReturnType());
+			}
+		});
+		return (T)obj;
+	}
+	
+	@SuppressWarnings("unchecked")
 	public static <T> T getProxyRandomClientRemote(T remote, String cluster) {
 		Object obj = ProxyFactory.getProxyInstance(remote, new ProxyMethodInterceptor() {
 			@Override
@@ -135,4 +156,26 @@ public class ProxyUtil {
 		});
 		return (T)obj;
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static <T> T getProxyRandomClientRemoteWithRetry(T remote, String cluster) {
+		Object obj = ProxyFactory.getProxyInstance(remote, new ProxyMethodInterceptor() {
+			@Override
+			public Object intercept(Object obj, Method method, Object[] args) throws Exception {
+				Map<String, Object> map = new HashMap<>();
+				MehodParameterName mpn = new MehodParameterName(obj.getClass());
+				String[] params = mpn.getParameterNameByMethod(method);
+				for (int i = 0; i < params.length; i ++) {
+					map.put(params[i], args[i]);
+				}
+				ClientRemote clientRemote = ClientMgr.get().getRandomClientRemote(cluster);
+				if (clientRemote == null) {
+					throw new CreateRemoteFailException("clientRemote is null");
+				}
+				return clientRemote.rsyncRemote(obj.getClass().getSimpleName(), method.getName(), map, method.getGenericReturnType());
+			}
+		});
+		return (T)obj;
+	}
+	
 }

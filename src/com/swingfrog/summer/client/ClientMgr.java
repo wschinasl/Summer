@@ -114,11 +114,39 @@ public class ClientMgr {
 	}
 	
 	@SuppressWarnings("unchecked")
+	public <T> T getRemoteInvokeObjectWithRetry(String cluster, String name, Class<?> clazz) {
+		Object obj = remoteMap.get(clazz);
+		if (obj == null) {
+			try {
+				obj = ProxyUtil.getProxyClientRemoteWithRetry(clazz.newInstance(), cluster, name);
+			} catch (Exception e) {
+				throw new CreateRemoteFailException("remote object newInstance fail");
+			}
+			remoteMap.put(clazz, obj);
+		}
+		return (T) obj;
+	}
+	
+	@SuppressWarnings("unchecked")
 	public <T> T getRandomRemoteInvokeObject(String cluster, Class<?> clazz) {
 		Object obj = remoteMap.get(clazz);
 		if (obj == null) {
 			try {
 				obj = ProxyUtil.getProxyRandomClientRemote(clazz.newInstance(), cluster);
+			} catch (Exception e) {
+				throw new CreateRemoteFailException("remote object newInstance fail");
+			}
+			remoteMap.put(clazz, obj);
+		}
+		return (T) obj;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getRandomRemoteInvokeObjectWithRetry(String cluster, Class<?> clazz) {
+		Object obj = remoteMap.get(clazz);
+		if (obj == null) {
+			try {
+				obj = ProxyUtil.getProxyRandomClientRemoteWithRetry(clazz.newInstance(), cluster);
 			} catch (Exception e) {
 				throw new CreateRemoteFailException("remote object newInstance fail");
 			}

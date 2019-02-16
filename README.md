@@ -22,6 +22,10 @@
 
 ## 更新
 ### 2019.02.17
+1. ClientRemote类，新增rsyncRemote方法，调用接口超时将自动重试直到成功为止。
+2. ClientRemote类，新增getServerName方法，可获取远程服务器节点名称。
+3. 新增Summer.getRemoteInvokeObjectWithRetry、Summer.getRandomRemoteInvokeObjectWithRetry，用于获取连接其他服务器的远程调用接口代理对象，超时将自动重试直到成功为止。
+
 ### 2019.01.28
 1. 修复了，服务器之间远程调用可能出现丢包的问题，原因是消息id不能正确的递增，解决办法是修改了消息id的判断。
 2. 当作为web服务器时，若接口返回的类型不是WebView，则将返数据序列化成Json，并返回TextView。
@@ -832,10 +836,22 @@ public static ClientRemote getRandomClientRemote(String cluster) {}
 public static <T> T getRemoteInvokeObject(String cluster, String name, Class<?> clazz) {}
 ```
 
+#### Summer.getRemoteInvokeObjectWithRetry
+通过集群名称和服务器节点名称获取连接其他服务器的远程调用接口代理对象，超时将自动重试直到成功为止
+```java
+public static <T> T getRemoteInvokeObjectWithRetry(String cluster, String name, Class<?> clazz) {}
+```
+
 #### Summer.getRandomRemoteInvokeObject
 通过集群名称，随机获取连接其他服务器的远程调用接口代理对象
 ```java
 public static <T> T getRandomRemoteInvokeObject(String cluster, Class<?> clazz) {}
+```
+
+#### Summer.getRandomRemoteInvokeObjectWithRetry
+通过集群名称，随机获取连接其他服务器的远程调用接口代理对象，超时将自动重试直到成功为止
+```java
+public static <T> T getRandomRemoteInvokeObjectWithRetry(String cluster, Class<?> clazz) {}
 ```
 
 ##### 账号服务器

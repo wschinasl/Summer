@@ -172,8 +172,16 @@ public class Summer {
 		return ClientMgr.get().getRemoteInvokeObject(cluster, name, clazz);
 	}
 	
+	public static <T> T getRemoteInvokeObjectWithRetry(String cluster, String name, Class<?> clazz) {
+		return ClientMgr.get().getRemoteInvokeObjectWithRetry(cluster, name, clazz);
+	}
+	
 	public static <T> T getRandomRemoteInvokeObject(String cluster, Class<?> clazz) {
 		return ClientMgr.get().getRandomRemoteInvokeObject(cluster, clazz);
+	}
+	
+	public static <T> T getRandomRemoteInvokeObjectWithRetry(String cluster, Class<?> clazz) {
+		return ClientMgr.get().getRandomRemoteInvokeObjectWithRetry(cluster, clazz);
 	}
 	
 	public static ServerPush getServerPush() {
