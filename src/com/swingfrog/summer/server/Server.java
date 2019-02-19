@@ -87,4 +87,8 @@ public class Server {
 		}));
 	}
 
+	public EventLoopGroup getEventLoopGroup() {
+		return serverContext.getEventGroup();
+	}
+	
 }

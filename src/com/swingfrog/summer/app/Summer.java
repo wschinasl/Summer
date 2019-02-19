@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.swingfrog.summer.client.ClientMgr;
 import com.swingfrog.summer.client.ClientRemote;
+import com.swingfrog.summer.concurrent.SessionQueueMgr;
 import com.swingfrog.summer.concurrent.SingleQueueMgr;
 import com.swingfrog.summer.concurrent.SynchronizedMgr;
 import com.swingfrog.summer.config.ConfigMgr;
@@ -31,6 +32,8 @@ import com.swingfrog.summer.task.TaskMgr;
 import com.swingfrog.summer.task.TaskTrigger;
 import com.swingfrog.summer.task.TaskUtil;
 import com.swingfrog.summer.web.WebMgr;
+
+import io.netty.channel.EventLoopGroup;
 
 public class Summer {
 	
@@ -78,6 +81,8 @@ public class Summer {
 		ServerMgr.get().init();
 		ClientMgr.get().init();
 		EventMgr.get().init();
+		SessionQueueMgr.get().init(ServerMgr.get().getEventLoopGroup());
+		SingleQueueMgr.get().init(ServerMgr.get().getEventLoopGroup());
 		ContainerMgr.get().autowired();
 		ContainerMgr.get().autowiredLog();
 		ContainerMgr.get().proxyObj();
@@ -190,6 +195,14 @@ public class Summer {
 	
 	public static void closeSession(SessionContext sctx) {
 		ServerMgr.get().closeSession(sctx);
+	}
+	
+	public static EventLoopGroup getServerEventLoopGroup() {
+		return ServerMgr.get().getEventLoopGroup();
+	}
+	
+	public static int getSessionQueueSize(SessionContext sctx) {
+		return SessionQueueMgr.get().getQueueSize(sctx);
 	}
 	
 	public static CodeException createCodeException(long code, String msg) {

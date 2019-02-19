@@ -250,19 +250,7 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 	private void doWork(ChannelHandlerContext ctx, SessionContext sctx, WebRequest request) {
 		log.debug("server request {} from {}", request, sctx);
 		if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {
-			EventLoopGroup eventLoopGroup = serverContext.getEventGroup();
-			Method method = RemoteDispatchMgr.get().getMethod(request);
-			if (method != null) {
-				String singleQueueName = ContainerMgr.get().getSingleQueueName(method);
-				if (singleQueueName != null) {
-					eventLoopGroup = SingleQueueMgr.get().getEventLoopGroup(singleQueueName);
-				} else {
-					if (ContainerMgr.get().isSessionQueue(method)) {
-						eventLoopGroup = SessionQueueMgr.get().getEventLoopGroup(sctx);
-					}
-				}
-			}
-			eventLoopGroup.execute(()->{
+			Runnable event = ()->{
 				try {
 					WebView webView = RemoteDispatchMgr.get().webProcess(request, sctx);
 					if (webView == null) {
@@ -295,7 +283,22 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 					}
 					writeResponse(ctx, sctx, request, webView);
 				}
-			});
+			};
+			Method method = RemoteDispatchMgr.get().getMethod(request);
+			if (method != null) {
+				String singleQueueName = ContainerMgr.get().getSingleQueueName(method);
+				if (singleQueueName != null) {
+					SingleQueueMgr.get().execute(singleQueueName, event);
+				} else {
+					if (ContainerMgr.get().isSessionQueue(method)) {
+						SessionQueueMgr.get().execute(sctx, event);
+					} else {
+						serverContext.getEventGroup().execute(event);
+					}
+				}
+			} else {
+				serverContext.getEventGroup().execute(event);
+			}
 		}
 	}
 	

@@ -21,6 +21,11 @@
 ## 前言
 
 ## 更新
+### 2019.02.20
+1. 新增Summer.getServerEventLoopGroup，用于获取服务器业务线程池
+2. 新增Summer.getSessionQueueSize，用于获取会话队列长度
+3. 优化SessionQueue、SingleQueue队列，不再分配新线程，将以队列的形式逐个提交到服务器业务线程中（在此特别感谢一位大哥的支持与协助）
+
 ### 2019.02.17
 1. ClientRemote类，新增rsyncRemote方法，调用接口超时将自动重试直到成功为止。
 2. ClientRemote类，新增getServerName方法，用于获取连接其他服务器的节点名称。
@@ -38,7 +43,7 @@ IDE: eclipse (仅供参考)<br/>
 将SummerServer库添加至UserLibraries
 #### SummerServer库
 asm-6.2.jar<br/>
-cglib-3.2.7.jar
+cglib-3.2.7.jar<br/>
 commons-dbutils-1.7.jar<br/>
 commons-pool2-2.4.2.jar<br/>
 druid-1.1.10.jar<br/>
@@ -945,6 +950,18 @@ public class ServerPush {
 关闭会话
 ```java
 public static void closeSession(SessionContext sctx) {}
+```
+
+#### Summer.getServerEventLoopGroup
+获取服务器业务线程池
+```java
+public static EventLoopGroup getServerEventLoopGroup() {}
+```
+
+#### Summer.getSessionQueueSize
+获取会话队列大小
+```java
+public static int getSessionQueueSize(SessionContext sctx){}
 ```
 
 #### Summer.createCodeException

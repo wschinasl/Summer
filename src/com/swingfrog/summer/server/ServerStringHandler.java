@@ -18,7 +18,6 @@ import com.swingfrog.summer.server.exception.SessionException;
 import com.swingfrog.summer.server.rpc.RpcClientMgr;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.TooLongFrameException;
 
@@ -100,19 +99,7 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 					sctx.setCurrentMsgId(request.getId());
 					log.debug("server request {} from {}", msg, sctx);
 					if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {
-						EventLoopGroup eventLoopGroup = serverContext.getEventGroup();
-						Method method = RemoteDispatchMgr.get().getMethod(request);
-						if (method != null) {
-							String singleQueueName = ContainerMgr.get().getSingleQueueName(method);
-							if (singleQueueName != null) {
-								eventLoopGroup = SingleQueueMgr.get().getEventLoopGroup(singleQueueName);
-							} else {
-								if (ContainerMgr.get().isSessionQueue(method)) {
-									eventLoopGroup = SessionQueueMgr.get().getEventLoopGroup(sctx);
-								}
-							}
-						}
-						eventLoopGroup.execute(()->{
+						Runnable event = ()->{
 							try {
 								String response = RemoteDispatchMgr.get().process(request, sctx).toJSONString();
 								log.debug("server response {} to {}", response, sctx);
@@ -142,7 +129,22 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 								log.debug("server response error {} to {}", response, sctx);
 								ctx.writeAndFlush(response);
 							}
-						});
+						};
+						Method method = RemoteDispatchMgr.get().getMethod(request);
+						if (method != null) {
+							String singleQueueName = ContainerMgr.get().getSingleQueueName(method);
+							if (singleQueueName != null) {
+								SingleQueueMgr.get().execute(singleQueueName, event);
+							} else {
+								if (ContainerMgr.get().isSessionQueue(method)) {
+									SessionQueueMgr.get().execute(sctx, event);
+								} else {
+									serverContext.getEventGroup().execute(event);
+								}
+							}
+						} else {
+							serverContext.getEventGroup().execute(event);
+						}
 					}
 				} else {
 					serverContext.getSessionHandlerGroup().repetitionMsg(sctx);

@@ -2,13 +2,13 @@ package com.swingfrog.summer.concurrent;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.DefaultThreadFactory;
 
 public class SingleQueueMgr {
 
-	private Map<Object, EventLoopGroup> singleQueueMap;
+	private EventLoopGroup eventLoopGroup;
+	private Map<Object, RunnableQueue> singleQueueMap;
 	
 	private static class SingleCase {
 		public static final SingleQueueMgr INSTANCE = new SingleQueueMgr();
@@ -22,27 +22,56 @@ public class SingleQueueMgr {
 		return SingleCase.INSTANCE;
 	}
 	
-	public EventLoopGroup getEventLoopGroup(Object key) {
+	public void init(EventLoopGroup eventLoopGroup) {
+		this.eventLoopGroup = eventLoopGroup;
+	}
+	
+	public RunnableQueue getRunnableQueue(Object key) {
 		if (key == null) {
 			throw new NullPointerException("key is null");
 		}
-		EventLoopGroup es = singleQueueMap.get(key);
-		if (es == null) {
+		RunnableQueue rq = singleQueueMap.get(key);
+		if (rq == null) {
 			synchronized (key) {
-				es = singleQueueMap.get(key);
-				if (es == null) {
-					es = new NioEventLoopGroup(1, new DefaultThreadFactory("SingleQueue", true));
-					singleQueueMap.put(key, es);
+				rq = singleQueueMap.get(key);
+				if (rq == null) {
+					rq = RunnableQueue.build();
+					singleQueueMap.put(key, rq);
 				}
 			}
 		}
-		return es;
+		return rq;
 	}
 	
 	public void execute(Object key, Runnable runnable) {
 		if (runnable == null) {
 			throw new NullPointerException("runnable is null");
 		}
-		getEventLoopGroup(key).execute(runnable);
+		getRunnableQueue(key).getQueue().add(runnable);
+		next(key);
+	}
+	
+	public void next(Object key) {
+		RunnableQueue rq = getRunnableQueue(key);
+		if (rq.getState().compareAndSet(true, false)) {
+			Runnable runnable = rq.getQueue().poll();
+			if (runnable != null) {
+				eventLoopGroup.execute(()->{
+					try {						
+						runnable.run();
+					} finally {						
+						finish(key);
+					}
+				});
+			} else {
+				rq.getState().compareAndSet(false, true);
+			}
+		}
+	}
+	
+	public void finish(Object key) {
+		RunnableQueue rq = getRunnableQueue(key);
+		rq.getState().compareAndSet(false, true);
+		next(key);
 	}
 }

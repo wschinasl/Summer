@@ -9,6 +9,7 @@ import com.swingfrog.summer.config.ConfigMgr;
 import com.swingfrog.summer.config.ServerConfig;
 import com.swingfrog.summer.ioc.ContainerMgr;
 
+import io.netty.channel.EventLoopGroup;
 import javassist.NotFoundException;
 
 public class ServerMgr {
@@ -55,6 +56,10 @@ public class ServerMgr {
 	
 	public void closeSession(SessionContext sctx) {
 		server.closeSession(sctx);
+	}
+	
+	public EventLoopGroup getEventLoopGroup() {
+		return server.getEventLoopGroup();
 	}
 	
 }
