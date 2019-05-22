@@ -1,6 +1,6 @@
 package com.swingfrog.summer.web;
 
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 import com.swingfrog.summer.app.Summer;
+import com.swingfrog.summer.concurrent.MatchGroupKey;
 import com.swingfrog.summer.concurrent.SessionQueueMgr;
 import com.swingfrog.summer.concurrent.SingleQueueMgr;
 import com.swingfrog.summer.ioc.ContainerMgr;
@@ -241,7 +242,7 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 		eventLoopGroup.execute(()->{
 			try {
 				writeResponse(ctx, sctx, request, new FileView(WebMgr.get().getWebContentPath() + request.getPath()));
-			} catch (FileNotFoundException e) {
+			} catch (IOException e) {
 				writeResponse(ctx, sctx, request, WebMgr.get().getInteriorViewFactory().createErrorView(404, "Not Found"));
 			}
 		});
@@ -286,9 +287,21 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 			};
 			Method method = RemoteDispatchMgr.get().getMethod(request);
 			if (method != null) {
-				String singleQueueName = ContainerMgr.get().getSingleQueueName(method);
-				if (singleQueueName != null) {
-					SingleQueueMgr.get().execute(singleQueueName, event);
+				MatchGroupKey matchGroupKey = ContainerMgr.get().getSingleQueueKey(method);
+				if (matchGroupKey != null) {
+					if (matchGroupKey.hasKeys()) {
+						Object[] partKeys = new Object[matchGroupKey.getKeys().size()];
+						for (int i = 0; i < matchGroupKey.getKeys().size(); i++) {
+							String key = request.getData().getString(matchGroupKey.getKeys().get(i));
+							if (key == null) {
+								key = "";
+							}
+							partKeys[i] = key;
+						}
+						SingleQueueMgr.get().execute(matchGroupKey.getMainKey(partKeys).intern(), event);
+					} else {									
+						SingleQueueMgr.get().execute(matchGroupKey.getMainKey().intern(), event);
+					}
 				} else {
 					if (ContainerMgr.get().isSessionQueue(method)) {
 						SessionQueueMgr.get().execute(sctx, event);

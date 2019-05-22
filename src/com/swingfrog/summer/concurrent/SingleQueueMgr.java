@@ -3,10 +3,15 @@ package com.swingfrog.summer.concurrent;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.channel.EventLoopGroup;
 
 public class SingleQueueMgr {
 
+	private static final Logger log = LoggerFactory.getLogger(SingleQueueMgr.class);
+	
 	private EventLoopGroup eventLoopGroup;
 	private Map<Object, RunnableQueue> singleQueueMap;
 	
@@ -47,6 +52,7 @@ public class SingleQueueMgr {
 		if (runnable == null) {
 			throw new NullPointerException("runnable is null");
 		}
+		log.debug("SingleQueueMgr execute runnable key[{}]", key);
 		getRunnableQueue(key).getQueue().add(runnable);
 		next(key);
 	}
@@ -57,9 +63,11 @@ public class SingleQueueMgr {
 			Runnable runnable = rq.getQueue().poll();
 			if (runnable != null) {
 				eventLoopGroup.execute(()->{
-					try {						
+					try {
 						runnable.run();
-					} finally {						
+					} catch (Exception e) {
+						log.error(e.getMessage(), e);
+					} finally {
 						finish(key);
 					}
 				});

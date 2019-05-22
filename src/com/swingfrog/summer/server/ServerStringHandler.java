@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.swingfrog.summer.concurrent.MatchGroupKey;
 import com.swingfrog.summer.concurrent.SessionQueueMgr;
 import com.swingfrog.summer.concurrent.SingleQueueMgr;
 import com.swingfrog.summer.ioc.ContainerMgr;
@@ -132,9 +133,21 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 						};
 						Method method = RemoteDispatchMgr.get().getMethod(request);
 						if (method != null) {
-							String singleQueueName = ContainerMgr.get().getSingleQueueName(method);
-							if (singleQueueName != null) {
-								SingleQueueMgr.get().execute(singleQueueName, event);
+							MatchGroupKey matchGroupKey = ContainerMgr.get().getSingleQueueKey(method);
+							if (matchGroupKey != null) {
+								if (matchGroupKey.hasKeys()) {
+									Object[] partKeys = new Object[matchGroupKey.getKeys().size()];
+									for (int i = 0; i < matchGroupKey.getKeys().size(); i++) {
+										String key = request.getData().getString(matchGroupKey.getKeys().get(i));
+										if (key == null) {
+											key = "";
+										}
+										partKeys[i] = key;
+									}
+									SingleQueueMgr.get().execute(matchGroupKey.getMainKey(partKeys).intern(), event);
+								} else {									
+									SingleQueueMgr.get().execute(matchGroupKey.getMainKey().intern(), event);
+								}
 							} else {
 								if (ContainerMgr.get().isSessionQueue(method)) {
 									SessionQueueMgr.get().execute(sctx, event);

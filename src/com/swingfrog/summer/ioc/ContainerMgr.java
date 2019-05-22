@@ -34,6 +34,7 @@ import com.swingfrog.summer.annotation.base.MethodParameter;
 import com.swingfrog.summer.annotation.base.QueueManager;
 import com.swingfrog.summer.annotation.base.SynchronizedManager;
 import com.swingfrog.summer.annotation.base.TransactionManager;
+import com.swingfrog.summer.concurrent.MatchGroupKey;
 import com.swingfrog.summer.proxy.ProxyUtil;
 import com.swingfrog.summer.task.MethodInvoke;
 import com.swingfrog.summer.task.TaskMgr;
@@ -52,7 +53,7 @@ public class ContainerMgr {
 	private List<Class<?>> remoteList;
 	private List<Class<?>> pushList;
 	private List<Class<?>> handlerList;
-	private Map<Method, String> singleQueueMap;
+	private Map<Method, MatchGroupKey> singleQueueMap;
 	private List<Method> sessionQueueList;
 	private Map<Method, String> synchronizedMap;
 	private List<TaskTrigger> taskList;
@@ -177,7 +178,7 @@ public class ContainerMgr {
 				SingleQueue singleQueue = method.getDeclaredAnnotation(SingleQueue.class);
 				if (singleQueue != null) {
 					log.info("open single queue[{}] {}.{}", singleQueue.value(), clazz.getSimpleName(), method.getName());
-					singleQueueMap.put(method, singleQueue.value());
+					singleQueueMap.put(method, new MatchGroupKey(singleQueue.value()));
 				} else if (method.isAnnotationPresent(SessionQueue.class)) {
 					log.info("open session queue {}.{}", clazz.getSimpleName(), method.getName());
 					sessionQueueList.add(method);
@@ -190,7 +191,7 @@ public class ContainerMgr {
 				Synchronized sync = method.getDeclaredAnnotation(Synchronized.class);
 				if (sync != null) {
 					log.info("open synchronized[{}] {}.{}", sync.value(), clazz.getSimpleName(), method.getName());
-					singleQueueMap.put(method, sync.value());
+					synchronizedMap.put(method, sync.value());
 				}
 			}
 		}
@@ -323,7 +324,7 @@ public class ContainerMgr {
 		return handlerList.iterator();
 	}
 	
-	public String getSingleQueueName(Method method) {
+	public MatchGroupKey getSingleQueueKey(Method method) {
 		return singleQueueMap.get(method);
 	}
 	

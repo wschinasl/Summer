@@ -21,6 +21,11 @@
 ## 前言
 
 ## 更新
+### 2019.05.22
+1. 在http协议下，请求Remote时，若返回类型不为WebView时，将会把返回的数据序列化成json格式并以TextView返回，若返回类型为void则返回BlankView。修复了当请求资源css、js等，content-type错误的问题。
+2. 注解@SingleQueue(key)，新增通配符${arg}，arg为Remote上的参数。
+3. 修复注解@Synchronized不生效的问题。
+
 ### 2019.02.20
 1. 新增Summer.getServerEventLoopGroup，用于获取服务器业务线程池
 2. 新增Summer.getSessionQueueSize，用于获取会话队列长度

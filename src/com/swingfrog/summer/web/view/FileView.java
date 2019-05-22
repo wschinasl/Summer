@@ -1,8 +1,9 @@
 package com.swingfrog.summer.web.view;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -15,10 +16,13 @@ public class FileView implements WebView {
 	private RandomAccessFile file;
 	private String contentType;
 	
-	public FileView(String fileName) throws FileNotFoundException {
+	public FileView(String fileName) throws IOException {
 		file = new RandomAccessFile(fileName, "r");
-		MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-		contentType = mimeTypesMap.getContentType(fileName);
+		contentType = Files.probeContentType(Paths.get(fileName));
+		if (contentType == null) {
+			MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
+			contentType = mimeTypesMap.getContentType(fileName);
+		}
 	}
 	
 	@Override
