@@ -22,7 +22,7 @@
 
 ## 更新
 ### 2019.05.22
-1. 在http协议下，请求Remote时，若返回类型不为WebView时，将会把返回的数据序列化成json格式并以TextView返回，若返回类型为void则返回BlankView。修复了当请求资源css、js等，content-type错误的问题。
+1. 修复了http协议下请求资源css、js等，content-type错误的问题。
 2. 注解@SingleQueue(key)，新增通配符${arg}，arg为Remote上的参数。
 3. 修复注解@Synchronized不生效的问题。
 
