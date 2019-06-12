@@ -18,6 +18,7 @@ public class ConfigMgr {
 	private static final Logger log = LoggerFactory.getLogger(ConfigMgr.class);
 
 	private ServerConfig serverConfig;
+	private ServerConfig[] minorConfigs;
 	private ClientConfig[] clientConfigs;
 
 	private static class SingleCase {
@@ -40,6 +41,15 @@ public class ConfigMgr {
 		Properties pro = new Properties();
 		pro.load(in);
 		loadDataWithBean(pro, "server.", serverConfig);
+		String minorList = pro.getProperty("server.minorList");
+		if (minorList != null && minorList.length() > 0) {
+			String[] minors = getValueByTypeAndString(String[].class, minorList);
+			minorConfigs = new ServerConfig[minors.length];
+			for (int i = 0; i < minorConfigs.length; i ++) {
+				minorConfigs[i] = new ServerConfig();
+				loadDataWithBean(pro, String.format("minor.%s.", minors[i]), minorConfigs[i]);
+			}
+		}
 		String clientList = pro.getProperty("server.clientList");
 		if (clientList != null && clientList.length() > 0) {
 			String[] clients = getValueByTypeAndString(String[].class, clientList);
@@ -111,6 +121,10 @@ public class ConfigMgr {
 
 	public ServerConfig getServerConfig() {
 		return serverConfig;
+	}
+	
+	public ServerConfig[] getMinorConfigs() {
+		return minorConfigs;
 	}
 	
 	public ClientConfig[] getClientConfigs() {

@@ -12,4 +12,6 @@ import com.swingfrog.summer.annotation.base.AutowiredManager;
 @AutowiredManager
 public @interface ServerHandler {
 
+	String value() default "";
+	
 }

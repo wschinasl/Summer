@@ -53,6 +53,7 @@ public class ContainerMgr {
 	private List<Class<?>> remoteList;
 	private List<Class<?>> pushList;
 	private List<Class<?>> handlerList;
+	private Map<String, List<Class<?>>> handlerMap;
 	private Map<Method, MatchGroupKey> singleQueueMap;
 	private List<Method> sessionQueueList;
 	private Map<Method, String> synchronizedMap;
@@ -72,6 +73,7 @@ public class ContainerMgr {
 		remoteList = new ArrayList<>();
 		pushList = new ArrayList<>();
 		handlerList = new ArrayList<>();
+		handlerMap = new HashMap<>();
 		singleQueueMap = new HashMap<>();
 		sessionQueueList = new ArrayList<>();
 		synchronizedMap = new HashMap<>();
@@ -111,7 +113,17 @@ public class ContainerMgr {
 		if (anno.isAnnotationPresent(ServerHandler.class)) {
 			log.info("register server handler {}", clazz.getSimpleName());
 			map.put(clazz, clazz.newInstance());
-			handlerList.add(clazz);
+			ServerHandler sh = anno.getAnnotation(ServerHandler.class);
+			if (sh == null || sh.value().isEmpty()) {
+				handlerList.add(clazz);
+			} else {
+				List<Class<?>> list = handlerMap.get(sh.value());
+				if (list == null) {
+					list = new ArrayList<>();
+					handlerMap.put(sh.value(), list);
+				}
+				list.add(clazz);
+			}
 			analysis(clazz, ServerHandler.class);
 		} 
 		if (anno.isAnnotationPresent(Service.class)) {
@@ -322,6 +334,13 @@ public class ContainerMgr {
 	
 	public Iterator<Class<?>> iteratorHandlerList() {
 		return handlerList.iterator();
+	}
+	
+	public Iterator<Class<?>> iteratorHandlerList(String serverName) {
+		if (handlerMap.containsKey(serverName)) {
+			return handlerMap.get(serverName).iterator();
+		}
+		return null;
 	}
 	
 	public MatchGroupKey getSingleQueueKey(Method method) {

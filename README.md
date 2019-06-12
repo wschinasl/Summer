@@ -21,6 +21,10 @@
 ## 前言
 
 ## 更新
+### 2019.06.12
+1. 支持一个进程启动多个服务端口，仅需对配置进行修改，详细请见下方服务器配置文件。在使用@ServerHandler时，默认监听主端口，若需要监听其他端口，可使用@ServerHandler(serverName)指定服务器名。
+
+
 ### 2019.05.22
 1. 修复了http协议下请求资源css、js等，content-type错误的问题。
 2. 注解@SingleQueue(key)，新增通配符${arg}，arg为Remote上的参数。
@@ -204,7 +208,7 @@ org.quartz.jobStore.misfireThreshold=60000
 org.quartz.jobStore.class=org.quartz.simpl.RAMJobStore
 ```
 
-##### server.properties (服务器配置文件)
+##### server.properties (服务器配置文件) [6.12更新]
 ```properties
 #服务器集群名称
 server.cluster=Gate
@@ -236,6 +240,25 @@ server.coldDownMs=10
 server.allowAddressEnable=true
 #白名单允许连接的地址
 server.allowAddressList=127.0.0.1,127.0.0.2
+
+#服务器的其他端口列表
+server.minorList=gate_s2
+
+minor.gate_s2.cluster=Gate
+minor.gate_s2.serverName=gate_s2
+minor.gate_s2.address=127.0.0.1
+minor.gate_s2.port=8080
+minor.gate_s2.protocol=Http
+minor.gate_s2.charset=UTF-8
+minor.gate_s2.password=
+minor.gate_s2.bossThread=0
+minor.gate_s2.workerThread=0
+minor.gate_s2.eventThread=0
+minor.gate_s2.msgLength=1024000
+minor.gate_s2.heartSec=40
+minor.gate_s2.coldDownMs=10
+minor.gate_s2.allowAddressEnable=false
+minor.gate_s2.allowAddressList=
 
 #连接其他服务器的列表
 server.clientList=account_s1,account_s2
