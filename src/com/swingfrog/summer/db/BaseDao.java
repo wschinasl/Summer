@@ -55,6 +55,26 @@ public abstract class BaseDao<T> {
 		return i;
 	}
 	
+	protected int[] batch(String sql, Object[][] args) {
+		if (log.isDebugEnabled()) {
+			for (Object[] array : args) {				
+				log.debug("{}  {}", sql, array);
+			}
+		}
+		try {
+			return queryRunner.batch(DataBaseMgr.get().getConnection(), sql, args);
+		} catch (SQLException e) {
+			log.error(e.getMessage(), e);
+		} finally {
+			try {
+				DataBaseMgr.get().discardConnectionFromDao();
+			} catch (SQLException e) {
+				log.error(e.getMessage(), e);
+			}
+		}
+		return null;
+	}
+	
 	protected Long insertAndGetGeneratedKeys(String sql, Object... args) {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);

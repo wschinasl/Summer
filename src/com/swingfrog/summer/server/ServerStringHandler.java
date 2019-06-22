@@ -106,7 +106,7 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 								log.debug("server response {} to {}", response, sctx);
 								ctx.writeAndFlush(response);
 							} catch (CodeException ce) {
-								log.error(ce.getMessage(), ce);
+								log.warn(ce.getMessage(), ce);
 								String response = SessionResponse.buildError(request, ce).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
 								ctx.writeAndFlush(response);

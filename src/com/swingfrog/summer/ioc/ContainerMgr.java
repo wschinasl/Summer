@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -288,7 +289,7 @@ public class ContainerMgr {
 			TaskMgr.get().start(taskTrigger);
 		}
 	}
-	
+
 	public void addComponent(Object obj) {
 		map.put(obj.getClass(), obj);
 		componentList.add(obj.getClass());
@@ -306,9 +307,14 @@ public class ContainerMgr {
 		}
 		return null;
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public <T> T getDeclaredComponent(Class<?> clazz) {
+	public <T> Set<T> listDeclaredComponent(Class<T> clazz) {
+		return map.values().stream().filter(clazz::isInstance).map(obj -> (T)obj).collect(Collectors.toSet());
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getDeclaredComponent(Class<T> clazz) {
 		return (T)map.get(clazz);
 	}
 	
@@ -358,4 +364,5 @@ public class ContainerMgr {
 	public Iterator<Class<?>> iteratorEventList() {
 		return eventList.iterator();
 	}
+
 }

@@ -3,6 +3,9 @@ package com.swingfrog.summer.app;
 import java.io.File;
 import java.lang.reflect.Method;
 
+import com.swingfrog.summer.db.DelayCacheMgr;
+import com.swingfrog.summer.db.PersistenceMgr;
+import com.swingfrog.summer.lifecycle.Lifecycle;
 import org.apache.log4j.PropertyConfigurator;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -76,6 +79,7 @@ public class Summer {
 		ConfigMgr.get().loadConfig(serverProperties);
 		RedisMgr.get().loadConfig(redisProperties);
 		DataBaseMgr.get().loadConfig(dbProperties);
+		DelayCacheMgr.get().loadConfig(dbProperties);
 		TaskMgr.get().init(taskProperties);
 		ContainerMgr.get().init(projectPackage);
 		ServerMgr.get().init();
@@ -86,15 +90,27 @@ public class Summer {
 		ContainerMgr.get().autowired();
 		ContainerMgr.get().autowiredLog();
 		ContainerMgr.get().proxyObj();
+		PersistenceMgr.get().createTable();
 		app.init();
 		log.info("summer launch...");
+		ContainerMgr.get().listDeclaredComponent(Lifecycle.class).stream().filter(l -> l.getInfo() != null).sorted((a, b) ->
+			b.getInfo().getPriority() - a.getInfo().getPriority()).forEach(l -> {
+				log.info("lifecycle [{}] start", l.getInfo().getName());
+				l.start();
+			});
 		ContainerMgr.get().startTask();
 		ServerMgr.get().launch();
 		ClientMgr.get().connectAll();
 		TaskMgr.get().startAll();
 		app.start();
 		Runtime.getRuntime().addShutdownHook(new Thread(()->{
+			ContainerMgr.get().listDeclaredComponent(Lifecycle.class).stream().filter(l -> l.getInfo() != null).sorted((a,b) ->
+				a.getInfo().getPriority() - b.getInfo().getPriority()).forEach(l -> {
+					log.info("lifecycle [{}] stop", l.getInfo().getName());
+					l.stop();
+				});
 			app.stop();
+			DelayCacheMgr.get().shutdown();
 		}));
 	}
 	

@@ -21,6 +21,11 @@
 ## 前言
 
 ## 更新
+### 2019.06.22
+1. 新增接口Lifecycle，当组件实现此接口后，即可在服务器启动时触发start方法，在服务器关闭时触发stop方法。
+2. 新增方法<T> T ContainerMgr.getDeclaredComponent(Class<T> clazz)，可用于采集容器内的组件，例如第一点正是使用此方法采集所有实现Lifecycle的组件。
+3. 实现了一个简单的持久化层，支持缓存和异步写入，但对于结构有特定要求。使用时将实体继承AbstractDelayCacheEntity，dao继承DelayCacheDao，即可直接使用并自动建表。
+
 ### 2019.06.12
 1. 支持一个进程启动多个服务端口，仅需对配置进行修改，详细请见下方服务器配置文件。在使用@ServerHandler时，默认监听主端口，若需要监听其他端口，可使用@ServerHandler(serverName)指定服务器名。
 
@@ -66,6 +71,8 @@ netty-all-4.1.23.Final.jar<br/>
 quartz-2.3.0.jar<br/>
 slf4j-api-1.7.25.jar<br/>
 slf4j-log4j12-1.7.25.jar<br/>
+guava-28.0-jre.jar<br/>
+lombok-1.18.8.jar<br/>
 
 ## 快捷上手
 ### 创建项目
