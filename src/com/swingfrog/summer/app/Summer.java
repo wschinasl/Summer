@@ -2,6 +2,7 @@ package com.swingfrog.summer.app;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Set;
 
 import com.swingfrog.summer.db.DelayCacheMgr;
 import com.swingfrog.summer.db.PersistenceMgr;
@@ -132,6 +133,14 @@ public class Summer {
 	
 	public static <T> T getComponent(Class<?> clazz) {
 		return ContainerMgr.get().getComponent(clazz);
+	}
+	
+	public static <T> T getDeclaredComponent(Class<T> clazz) {
+		return ContainerMgr.get().getDeclaredComponent(clazz);
+	}
+	
+	public static <T> Set<T> listDeclaredComponent(Class<T> clazz) {
+		return ContainerMgr.get().listDeclaredComponent(clazz);
 	}
 	
 	public static <T> T getProxyInstance(Object target, ProxyMethodInterceptor interceptor) {

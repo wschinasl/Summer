@@ -23,7 +23,7 @@
 ## 更新
 ### 2019.06.22
 1. 新增接口Lifecycle，当组件实现此接口后，即可在服务器启动时触发start方法，在服务器关闭时触发stop方法。
-2. 新增方法<T> T ContainerMgr.getDeclaredComponent(Class<T> clazz)，可用于采集容器内的组件，例如第一点正是使用此方法采集所有实现Lifecycle的组件。
+2. 新增方法<T> Set<T> Summer.listDeclaredComponent(Class<T> clazz)，可用于采集容器内的组件，例如第一点正是使用此方法采集所有实现Lifecycle的组件。
 3. 实现了一个简单的持久化层，支持缓存和异步写入，但对于结构有特定要求。使用时将实体继承AbstractDelayCacheEntity，dao继承DelayCacheDao，即可直接使用并自动建表。
 
 ### 2019.06.12
