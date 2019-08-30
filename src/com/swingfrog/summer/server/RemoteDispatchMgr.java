@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.swingfrog.summer.annotation.Remote;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,9 +65,12 @@ public class RemoteDispatchMgr {
 		return null;
 	}
 	
-	private Object invoke(String remote, String method, JSONObject data, Map<Class<?>, Object> autoObj, Map<String, Object> autoNameObj) throws Exception {
+	private Object invoke(ServerContext serverContext, String remote, String method, JSONObject data, Map<Class<?>, Object> autoObj, Map<String, Object> autoNameObj) throws Exception {
 		RemoteClass remoteClass = remoteClassMap.get(remote);
 		if (remoteClass != null) {
+			if (remoteClass.filter && !remoteClass.serverName.equals(serverContext.getConfig().getServerName())) {
+				throw new CodeException(SessionException.REMOTE_WAS_PROTECTED);
+			}
 			RemoteMethod remoteMethod = remoteClass.getRemoteMethod(method);
 			if (remoteMethod != null) {
 				Object remoteObj = ContainerMgr.get().getDeclaredComponent(remoteClass.getClazz());
@@ -147,16 +151,16 @@ public class RemoteDispatchMgr {
 		}
 	}
 	
-	public SessionResponse process(SessionRequest req, SessionContext sctx) throws Exception {
+	public SessionResponse process(ServerContext serverContext, SessionRequest req, SessionContext sctx) throws Exception {
 		String remote = req.getRemote();
 		String method = req.getMethod();
 		JSONObject data = req.getData();
 		Map<Class<?>, Object> autoObj = new HashMap<>();
 		autoObj.put(SessionContext.class, sctx);
-		return SessionResponse.buildMsg(req, invoke(remote, method, data, autoObj, null));
+		return SessionResponse.buildMsg(req, invoke(serverContext, remote, method, data, autoObj, null));
 	}
 	
-	public WebView webProcess(WebRequest req, SessionContext sctx) throws Exception {
+	public WebView webProcess(ServerContext serverContext, WebRequest req, SessionContext sctx) throws Exception {
 		String remote = req.getRemote();
 		String method = req.getMethod();
 		JSONObject data = req.getData();
@@ -166,7 +170,7 @@ public class RemoteDispatchMgr {
 		for (String key : req.getFileUploadMap().keySet()) {
 			autoNameObj.put(key, req.getFileUploadMap().get(key));
 		}
-		Object obj = invoke(remote, method, data, autoObj, autoNameObj);
+		Object obj = invoke(serverContext, remote, method, data, autoObj, autoNameObj);
 		if (obj == null) {
 			return null;
 		}
@@ -178,10 +182,14 @@ public class RemoteDispatchMgr {
 	}
 	
 	private class RemoteClass {
+		private boolean filter;
+		private String serverName;
 		private Class<?> clazz;
 		private Map<String, RemoteMethod> remoteMethodMap = new HashMap<>();
 		public RemoteClass(Class<?> clazz) throws NotFoundException {
 			this.clazz = clazz;
+			this.filter = clazz.getAnnotation(Remote.class).filter();
+			this.serverName = clazz.getAnnotation(Remote.class).serverName();
 			Method[] methods = clazz.getDeclaredMethods();
 			for (int i = 0; i < methods.length; i++) {
 				Method method = methods[i];

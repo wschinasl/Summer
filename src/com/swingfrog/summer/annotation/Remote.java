@@ -20,4 +20,7 @@ import com.swingfrog.summer.annotation.base.TransactionManager;
 @SynchronizedManager
 public @interface Remote {
 
+    boolean filter() default false;
+    String serverName() default "";
+
 }

@@ -80,18 +80,16 @@ public class ServerPush {
 		String msg = SessionResponse.buildPush(remote, method, data).toJSONString();
 		serverContext.getPushGroup().execute(()->{
 			log.debug("server push to {} {}", sessionContext, msg);
-			serverContext.getSessionContextGroup().getChannelBySession(sessionContext).writeAndFlush(msg);
+			ChannelHandlerContext ctx = serverContext.getSessionContextGroup().getChannelBySession(sessionContext);
+			write(ctx, sessionContext, msg);
 		});
 	}
 
 	public void syncPushToSessionContext(SessionContext sessionContext, String remote, String method, Object data) {
 		String msg = SessionResponse.buildPush(remote, method, data).toJSONString();
 		log.debug("server push to {} {}", sessionContext, msg);
-		try {
-			serverContext.getSessionContextGroup().getChannelBySession(sessionContext).writeAndFlush(msg).sync();
-		} catch (InterruptedException e) {
-			log.error(e.getMessage(), e);
-		}
+		ChannelHandlerContext ctx = serverContext.getSessionContextGroup().getChannelBySession(sessionContext);
+		write(ctx, sessionContext, msg);
 	}
 	
 	public void asyncPushToSessionContexts(List<SessionContext> sessionContexts, String remote, String method, Object data) {
@@ -100,7 +98,9 @@ public class ServerPush {
 		serverContext.getPushGroup().execute(()->{
 			log.debug("server push to {} {}", sessionContexts, msg);
 			for (int i = 0; i < sessionContexts.size(); i++) {
-				group.getChannelBySession(sessionContexts.get(i)).writeAndFlush(msg);
+				ChannelHandlerContext ctx = group.getChannelBySession(sessionContexts.get(i));
+				SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+				write(ctx, sctx, msg);
 			}
 		});
 	}
@@ -110,11 +110,9 @@ public class ServerPush {
 		String msg = SessionResponse.buildPush(remote, method, data).toJSONString();
 		log.debug("server push to {} {}", sessionContexts, msg);
 		for (int i = 0; i < sessionContexts.size(); i++) {
-			try {
-				group.getChannelBySession(sessionContexts.get(i)).writeAndFlush(msg).sync();
-			} catch (InterruptedException e) {
-				log.error(e.getMessage(), e);
-			}
+			ChannelHandlerContext ctx = group.getChannelBySession(sessionContexts.get(i));
+			SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+			write(ctx, sctx, msg);
 		}
 	}
 
@@ -125,7 +123,9 @@ public class ServerPush {
 			log.debug("server push to all {}", msg);
 			Iterator<ChannelHandlerContext> ite = group.iteratorChannel();
 			while (ite.hasNext()) {
-				ite.next().writeAndFlush(msg);
+				ChannelHandlerContext ctx = ite.next();
+				SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+				write(ctx, sctx, msg);
 			}
 		});
 	}
@@ -136,12 +136,25 @@ public class ServerPush {
 		log.debug("server push to all {}", msg);
 		Iterator<ChannelHandlerContext> ite = group.iteratorChannel();
 		while (ite.hasNext()) {
-			try {
-				ite.next().writeAndFlush(msg).sync();
-			} catch (InterruptedException e) {
-				log.error(e.getMessage(), e);
-			}
+			ChannelHandlerContext ctx = ite.next();
+			SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+			write(ctx, sctx, msg);
 		}
+	}
+
+	private void write(ChannelHandlerContext ctx, SessionContext sctx, String response) {
+		if (ctx == null) {
+			return;
+		}
+		if (!ctx.channel().isActive()) {
+			return;
+		}
+		if (sctx.getWaitWriteQueueSize() == 0 && ctx.channel().isWritable()) {
+			ctx.writeAndFlush(response);
+		} else {
+			sctx.getWaitWriteQueue().add(response);
+		}
+		serverContext.getSessionHandlerGroup().sending(sctx);
 	}
 
 }

@@ -2,11 +2,13 @@ package com.swingfrog.summer.db;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.ColumnListHandler;
@@ -21,6 +23,9 @@ public abstract class BaseDao<T> {
 	private static final Logger log = LoggerFactory.getLogger(BaseDao.class);
 	private QueryRunner queryRunner;
 	private Class<T> clazz;
+	private BeanHandler<T> beanHandler;
+	private BeanListHandler<T> beanListHandler;
+
 	
 	@SuppressWarnings("unchecked")
 	protected BaseDao() {
@@ -35,6 +40,23 @@ public abstract class BaseDao<T> {
 				}
 			}
 		}
+		beanHandler = new BeanHandler(clazz);
+		beanListHandler = new BeanListHandler<>(clazz);
+	}
+
+	protected Class<T> getEntityClass() {
+		return clazz;
+	}
+
+	protected String topic() {
+		return null;
+	}
+
+	private Connection getConnection() throws SQLException {
+		if (topic() == null) {
+			return DataBaseMgr.get().getConnection();
+		}
+		return DataBaseMgr.get().getConnection(topic());
 	}
 	
 	protected int update(String sql, Object... args) {
@@ -42,7 +64,7 @@ public abstract class BaseDao<T> {
 			log.debug("{}  {}", sql, args);
 		int i = 0;
 		try {
-			i = queryRunner.update(DataBaseMgr.get().getConnection(), sql, args);
+			i = queryRunner.update(getConnection(), sql, args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -62,7 +84,7 @@ public abstract class BaseDao<T> {
 			}
 		}
 		try {
-			return queryRunner.batch(DataBaseMgr.get().getConnection(), sql, args);
+			return queryRunner.batch(getConnection(), sql, args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -79,7 +101,7 @@ public abstract class BaseDao<T> {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.insert(DataBaseMgr.get().getConnection(), sql, new ScalarHandler<Long>(), args);
+			return queryRunner.insert(getConnection(), sql, new ScalarHandler<Long>(), args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -93,10 +115,14 @@ public abstract class BaseDao<T> {
 	}
 
 	protected T getBean(String sql, Object... args) {
+		return getBean(sql, beanHandler, args);
+	}
+
+	protected T getBean(String sql, ResultSetHandler<T> rsh, Object... args) {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new BeanHandler<>(clazz), args);
+			return queryRunner.query(getConnection(), sql, rsh, args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -110,10 +136,14 @@ public abstract class BaseDao<T> {
 	}
 
 	protected List<T> listBean(String sql, Object... args) {
+		return listBean(sql, beanListHandler, args);
+	}
+
+	protected List<T> listBean(String sql, BeanListHandler<T> rsh, Object... args) {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new BeanListHandler<T>(clazz), args);
+			return queryRunner.query(getConnection(), sql, rsh, args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -130,7 +160,7 @@ public abstract class BaseDao<T> {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new ScalarHandler<E>(), args);
+			return queryRunner.query(getConnection(), sql, new ScalarHandler<>(), args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -142,12 +172,12 @@ public abstract class BaseDao<T> {
 		}
 		return null;
 	}
-	
+
 	protected <E> List<E> listValue(String sql, Object... args) {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new ColumnListHandler<E>(), args);
+			return queryRunner.query(getConnection(), sql, new ColumnListHandler<>(), args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -164,7 +194,7 @@ public abstract class BaseDao<T> {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new MapHandler(), args);
+			return queryRunner.query(getConnection(), sql, new MapHandler(), args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -181,7 +211,7 @@ public abstract class BaseDao<T> {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new MapListHandler(), args);
+			return queryRunner.query(getConnection(), sql, new MapListHandler(), args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -198,7 +228,7 @@ public abstract class BaseDao<T> {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new BeanHandler<>(clazz), args);
+			return queryRunner.query(getConnection(), sql, new BeanHandler<>(clazz), args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {
@@ -215,7 +245,7 @@ public abstract class BaseDao<T> {
 		if (log.isDebugEnabled())
 			log.debug("{}  {}", sql, args);
 		try {
-			return queryRunner.query(DataBaseMgr.get().getConnection(), sql, new BeanListHandler<E>(clazz), args);
+			return queryRunner.query(getConnection(), sql, new BeanListHandler<>(clazz), args);
 		} catch (SQLException e) {
 			log.error(e.getMessage(), e);
 		} finally {

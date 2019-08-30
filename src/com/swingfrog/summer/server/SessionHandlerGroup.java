@@ -89,5 +89,12 @@ public class SessionHandlerGroup implements SessionHandler {
 			sessionHandlerList.get(i).repetitionMsg(ctx);
 		}
 	}
-	
+
+	@Override
+	public void sending(SessionContext ctx) {
+		for (int i = 0; i < sessionHandlerList.size(); i ++) {
+			sessionHandlerList.get(i).sending(ctx);
+		}
+	}
+
 }

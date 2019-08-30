@@ -50,7 +50,10 @@ public class Server {
 		EventLoopGroup workerGroup = new NioEventLoopGroup(serverContext.getConfig().getWorkerThread(), new DefaultThreadFactory("ServerWorker", true));
 		try {
 			ServerBootstrap b = new ServerBootstrap();
-			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).option(ChannelOption.SO_BACKLOG,1024);
+			b.group(bossGroup, workerGroup)
+					.channel(NioServerSocketChannel.class)
+					.option(ChannelOption.SO_BACKLOG, 5)
+					.childOption(ChannelOption.TCP_NODELAY, true);
 			b.childHandler(new ServerInitializer(serverContext));
 			b.bind(serverContext.getConfig().getAddress(), serverContext.getConfig().getPort()).sync();
 			startCheckHeartTimeTask();

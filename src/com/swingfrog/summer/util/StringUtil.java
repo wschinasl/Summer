@@ -7,9 +7,11 @@ public class StringUtil {
 	
 	public static String getString(Object ...args) {
 		StringBuilder b = new StringBuilder();
-		for (Object arg : args) {
-			b.append(arg);
+		for (int i = 0; i < args.length - 1; i++) {
+			b.append(args[i]);
+			b.append("-");
 		}
+		b.append(args[args.length - 1]);
 		return b.toString().intern();
 	}
 

@@ -2,14 +2,14 @@ package com.swingfrog.summer.ioc;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,40 +46,27 @@ public class ContainerMgr {
 
 	private static final Logger log = LoggerFactory.getLogger(ContainerMgr.class);
 	
-	private Map<Class<?>, Object> map;
-	private List<Class<?>> autowiredList;
-	private List<Class<?>> componentList;
-	private List<Method> transactionList;
-	private List<Class<?>> parameterList;
-	private List<Class<?>> remoteList;
-	private List<Class<?>> pushList;
-	private List<Class<?>> handlerList;
-	private Map<String, List<Class<?>>> handlerMap;
-	private Map<Method, MatchGroupKey> singleQueueMap;
-	private List<Method> sessionQueueList;
-	private Map<Method, String> synchronizedMap;
-	private List<TaskTrigger> taskList;
-	private List<Class<?>> eventList;
+	private Map<Class<?>, Object> map = Maps.newHashMap();
+	private List<Class<?>> autowiredList = Lists.newLinkedList();
+	private List<Class<?>> componentList = Lists.newLinkedList();
+	private List<Method> transactionList = Lists.newLinkedList();
+	private List<Class<?>> parameterList = Lists.newLinkedList();
+	private List<Class<?>> remoteList = Lists.newLinkedList();
+	private List<Class<?>> pushList = Lists.newLinkedList();
+	private List<Class<?>> handlerList = Lists.newLinkedList();
+	private Map<String, List<Class<?>>> handlerMap = Maps.newHashMap();
+	private Map<Method, MatchGroupKey> singleQueueMap = Maps.newHashMap();
+	private List<Method> sessionQueueList = Lists.newLinkedList();
+	private Map<Method, String> synchronizedMap = Maps.newHashMap();
+	private List<TaskTrigger> taskList = Lists.newLinkedList();
+	private List<Class<?>> eventList = Lists.newLinkedList();
 	
 	private static class SingleCase {
 		public static final ContainerMgr INSTANCE = new ContainerMgr();
 	}
 	
 	private ContainerMgr() {
-		map = new HashMap<>();
-		autowiredList = new ArrayList<>(); 
-		componentList = new ArrayList<>();
-		transactionList = new ArrayList<>();
-		parameterList = new ArrayList<>();
-		remoteList = new ArrayList<>();
-		pushList = new ArrayList<>();
-		handlerList = new ArrayList<>();
-		handlerMap = new HashMap<>();
-		singleQueueMap = new HashMap<>();
-		sessionQueueList = new ArrayList<>();
-		synchronizedMap = new HashMap<>();
-		taskList = new ArrayList<>();
-		eventList = new ArrayList<>();
+
 	}
 	
 	public static ContainerMgr get() {
@@ -120,7 +107,7 @@ public class ContainerMgr {
 			} else {
 				List<Class<?>> list = handlerMap.get(sh.value());
 				if (list == null) {
-					list = new ArrayList<>();
+					list = Lists.newLinkedList();
 					handlerMap.put(sh.value(), list);
 				}
 				list.add(clazz);
@@ -218,42 +205,19 @@ public class ContainerMgr {
 	
 	public void autowired() throws IllegalArgumentException, IllegalAccessException {
 		for (Class<?> clazz : autowiredList) {
-			Object obj = map.get(clazz);
-			Field[] fields = clazz.getDeclaredFields();
-			for (Field field : fields) {
-				if (field.isAnnotationPresent(Autowired.class)) {
-					Class<?> type = field.getType();
-					if (componentList.contains(type)) {
-						log.info("autowired {}.{} success", clazz.getSimpleName(), field.getName());
-						field.setAccessible(true);
-						field.set(obj, map.get(type));
-					} else {
-						log.info("autowired {}.{} fail", clazz.getSimpleName(), field.getName());
-					}
-				}
-			}
-		}
-	}
-	
-	public void autowiredLog() throws IllegalArgumentException, IllegalAccessException {
-		for (Class<?> clazz : autowiredList) {
-			Object obj = map.get(clazz);
-			Field[] fields = clazz.getDeclaredFields();
-			for (Field field : fields) {
-				if (field.isAnnotationPresent(Autowired.class)) {
-					Class<?> type = field.getType();
-					if (type == Logger.class) {
-						log.info("autowired log {}.{} success", clazz.getSimpleName(), field.getName());
-						field.setAccessible(true);
-						field.set(obj, LoggerFactory.getLogger(clazz));
-					}
-				}
-			}
+			autowired(map.get(clazz));
 		}
 	}
 	
 	public void autowired(Object obj) throws IllegalArgumentException, IllegalAccessException {
 		Class<?> clazz = obj.getClass();
+		while (clazz != null) {
+			autowired(obj, clazz);
+			clazz = clazz.getSuperclass();
+		}
+	}
+
+	private void autowired(Object obj, Class<?> clazz) throws IllegalArgumentException, IllegalAccessException {
 		Field[] fields = clazz.getDeclaredFields();
 		for (Field field : fields) {
 			if (field.isAnnotationPresent(Autowired.class)) {

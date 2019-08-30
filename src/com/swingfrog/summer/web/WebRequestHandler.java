@@ -136,7 +136,7 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 					postRequestDecoder = new HttpPostRequestDecoder(factory, httpRequest);
 					processHttpContent(ctx, sctx, (HttpContent) httpObject);
 				} else {
-					log.warn("unkonw request method[%s]", method.name());
+					log.warn("not found request method[%s]", method.name());
 				}
 			} else if (httpObject instanceof HttpContent) {
 				processHttpContent(ctx, sctx, (HttpContent) httpObject);
@@ -253,7 +253,7 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 		if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {
 			Runnable event = ()->{
 				try {
-					WebView webView = RemoteDispatchMgr.get().webProcess(request, sctx);
+					WebView webView = RemoteDispatchMgr.get().webProcess(serverContext, request, sctx);
 					if (webView == null) {
 						writeResponse(ctx, sctx, request, WebMgr.get().getInteriorViewFactory().createBlankView());
 					} else {

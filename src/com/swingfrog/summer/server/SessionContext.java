@@ -1,5 +1,8 @@
 package com.swingfrog.summer.server;
 
+import com.google.common.collect.Queues;
+
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class SessionContext {
@@ -11,6 +14,7 @@ public class SessionContext {
 	private long currentMsgId;
 	private AtomicInteger heartCount = new AtomicInteger(0);
 	private long lastRecvTime;
+	private ConcurrentLinkedQueue<String> waitWriteQueue = Queues.newConcurrentLinkedQueue();
 	
 	public String getSessionId() {
 		return sessionId;
@@ -50,6 +54,12 @@ public class SessionContext {
 	}
 	public void setLastRecvTime(long lastRecvTime) {
 		this.lastRecvTime = lastRecvTime;
+	}
+	ConcurrentLinkedQueue<String> getWaitWriteQueue() {
+		return waitWriteQueue;
+	}
+	public int getWaitWriteQueueSize() {
+		return waitWriteQueue.size();
 	}
 	@Override
 	public String toString() {

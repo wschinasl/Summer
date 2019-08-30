@@ -53,7 +53,7 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 		serverContext.getSessionContextGroup().createSession(ctx);
 		SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
 		if (!serverContext.getSessionHandlerGroup().accpet(sctx)) {
-			log.warn("not accpet clinet {}", sctx);
+			log.warn("not accept client {}", sctx);
 			ctx.close();
 		}
 	}
@@ -69,7 +69,7 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
 		if (sctx != null) {
-			log.info("removed clinet {}", sctx);
+			log.info("removed client {}", sctx);
 			serverContext.getSessionHandlerGroup().removed(sctx);
 			serverContext.getSessionContextGroup().destroySession(ctx);
 			RpcClientMgr.get().remove(sctx);
@@ -102,14 +102,14 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 					if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {
 						Runnable event = ()->{
 							try {
-								String response = RemoteDispatchMgr.get().process(request, sctx).toJSONString();
+								String response = RemoteDispatchMgr.get().process(serverContext, request, sctx).toJSONString();
 								log.debug("server response {} to {}", response, sctx);
-								ctx.writeAndFlush(response);
+								write(ctx, sctx, response);
 							} catch (CodeException ce) {
 								log.warn(ce.getMessage(), ce);
 								String response = SessionResponse.buildError(request, ce).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
-								ctx.writeAndFlush(response);
+								write(ctx, sctx, response);
 							} catch (Exception e) {
 								log.error(e.getMessage(), e);
 								Throwable cause = e;
@@ -128,7 +128,7 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 									response = SessionResponse.buildError(request, SessionException.INVOKE_ERROR).toJSONString();									
 								}
 								log.debug("server response error {} to {}", response, sctx);
-								ctx.writeAndFlush(response);
+								write(ctx, sctx, response);
 							}
 						};
 						Method method = RemoteDispatchMgr.get().getMethod(request);
@@ -178,6 +178,27 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 		} else {
 			log.error(cause.getMessage(), cause);
 		}
+	}
+
+	@Override
+	public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+		super.channelWritabilityChanged(ctx);
+		SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+		while (ctx.channel().isActive() && ctx.channel().isWritable() && sctx.getWaitWriteQueueSize() > 0) {
+			ctx.writeAndFlush(sctx.getWaitWriteQueue().poll());
+		}
+	}
+
+	private void write(ChannelHandlerContext ctx, SessionContext sctx, String response) {
+		if (!ctx.channel().isActive()) {
+			return;
+		}
+		if (sctx.getWaitWriteQueueSize() == 0 && ctx.channel().isWritable()) {
+			ctx.writeAndFlush(response);
+		} else {
+			sctx.getWaitWriteQueue().add(response);
+		}
+		serverContext.getSessionHandlerGroup().sending(sctx);
 	}
 
 }

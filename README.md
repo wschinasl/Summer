@@ -21,6 +21,12 @@
 ## 前言
 
 ## 更新
+### 2019.08.30
+1. 移除之前实现的简单持久化层(2019.06.22的第三点)
+2. 新增SessionContent.getWaitWriteQueueSize，可获得待写队列的长度
+3. 接口SessionHandler新增抽象方法sending(SessionContext ctx)，当尝试数据写入时会回调此方法，可配合第二点当待写队列长度过大时关闭会话
+4. 新增持久化层，采用仓库模式(com.swingfrog.summer.db.repository)，实体上使用仓库相关的注解，以及dao继承RepositoryDao，即可实现仓库模式，自动建表，无需手动写SQL语句。除了基础的仓库功能还有缓存仓库CacheRepositoryDao、异步缓存仓库AsyncCacheRepositoryDao，推荐使用异步缓存仓库，支持异步/同步插入、更新、删除，以及同步查询。
+
 ### 2019.06.22
 1. 新增接口Lifecycle，当组件实现此接口后，即可在服务器启动时触发start方法，在服务器关闭时触发stop方法。
 2. 新增方法<T> Set<T> Summer.listDeclaredComponent(Class<T> clazz)，可用于采集容器内的组件，例如第一点正是使用此方法采集所有实现Lifecycle的组件。
