@@ -101,6 +101,9 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 					log.debug("server request {} from {}", msg, sctx);
 					if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {
 						Runnable event = ()->{
+							if (!ctx.channel().isActive()) {
+								return;
+							}
 							try {
 								String response = RemoteDispatchMgr.get().process(serverContext, request, sctx).toJSONString();
 								log.debug("server response {} to {}", response, sctx);
