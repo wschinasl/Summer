@@ -107,7 +107,7 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
     @Override
     public List<T> list(String field, Object value) {
         if (tableMeta.getCacheKeys().contains(tableMeta.getColumnMetaMap().get(field))) {
-            return listPrimaryValueByCacheKey(field, value).stream().map(this::get).collect(Collectors.toList());
+            return listPrimaryValueByCacheKey(field, value).stream().map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
         }
         return list(ImmutableMap.of(field, value));
     }
@@ -126,10 +126,10 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
         List<T> list;
         if (pkList.isEmpty()) {
             super.listPrimaryKey(optional).forEach(this::get);
-            list = cache.asMap().values().stream().sorted(Comparator.comparingInt(Objects::hashCode)).collect(Collectors.toList());
+            list = cache.asMap().values().stream().sorted(Comparator.comparingInt(Objects::hashCode)).filter(Objects::nonNull).collect(Collectors.toList());
         } else {
             if (pkList.size() == 1) {
-                list = pkList.get(0).stream().map(this::get).collect(Collectors.toList());
+                list = pkList.get(0).stream().map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
             } else {
                 List<K> first = pkList.removeFirst();
                 for (Iterator<K> iterator = first.iterator(); iterator.hasNext(); ) {
@@ -141,7 +141,7 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
                         }
                     }
                 }
-                list = first.stream().map(this::get).collect(Collectors.toList());
+                list = first.stream().map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
             }
         }
         if (normal.size() > 0) {
