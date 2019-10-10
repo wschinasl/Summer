@@ -1,5 +1,6 @@
 package com.swingfrog.summer.server;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
@@ -8,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.swingfrog.summer.annotation.Remote;
+import com.swingfrog.summer.util.JSONConvertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +67,7 @@ public class RemoteDispatchMgr {
 		return null;
 	}
 	
-	private Object invoke(ServerContext serverContext, String remote, String method, JSONObject data, Map<Class<?>, Object> autoObj, Map<String, Object> autoNameObj) throws Exception {
+	private Object invoke(ServerContext serverContext, String remote, String method, JSONObject data, Map<Class<?>, Object> autoObj, Map<String, Object> autoNameObj) throws Throwable {
 		RemoteClass remoteClass = remoteClassMap.get(remote);
 		if (remoteClass != null) {
 			if (remoteClass.filter && !remoteClass.serverName.equals(serverContext.getConfig().getServerName())) {
@@ -85,28 +87,8 @@ public class RemoteDispatchMgr {
 						String param = params[i];
 						Type type = paramTypes[i];
 						Parameter parameter = parameters[i];
-						if (type == boolean.class) {
-							obj[i] = data.getBooleanValue(param);
-						} else if (type == byte.class) {
-							obj[i] = data.getByteValue(param);
-						} else if (type == short.class) {
-							obj[i] = data.getShortValue(param);
-						} else if (type == int.class) {
-							obj[i] = data.getIntValue(param);
-						} else if (type == long.class) {
-							obj[i] = data.getLongValue(param);
-						} else if (type == Boolean.class) {
-							obj[i] = data.getBoolean(param);
-						} else if (type == Byte.class) {
-							obj[i] = data.getByte(param);
-						} else if (type == Short.class) {
-							obj[i] = data.getShort(param);
-						} else if (type == Integer.class) {
-							obj[i] = data.getInteger(param);
-						} else if (type == Long.class) {
-							obj[i] = data.getLong(param);
-						} else if (type == String.class) {
-							obj[i] = data.getString(param);
+						if (JSONConvertUtil.containsType(type)) {
+							obj[i] = JSONConvertUtil.convert(type, data, param);
 						} else {
 							if (data.containsKey(param)) {
 								try {
@@ -142,7 +124,11 @@ public class RemoteDispatchMgr {
 				} catch (Exception e) {
 					throw new CodeException(SessionException.PARAMETER_ERROR);
 				}
-				return remoteMod.invoke(remoteObj, obj);
+				try {
+					return remoteMod.invoke(remoteObj, obj);
+				} catch (InvocationTargetException e) {
+					throw e.getTargetException();
+				}
 			} else {
 				throw new CodeException(SessionException.METHOD_NOT_EXIST);
 			}
@@ -151,7 +137,7 @@ public class RemoteDispatchMgr {
 		}
 	}
 	
-	public SessionResponse process(ServerContext serverContext, SessionRequest req, SessionContext sctx) throws Exception {
+	public SessionResponse process(ServerContext serverContext, SessionRequest req, SessionContext sctx) throws Throwable {
 		String remote = req.getRemote();
 		String method = req.getMethod();
 		JSONObject data = req.getData();
@@ -160,7 +146,7 @@ public class RemoteDispatchMgr {
 		return SessionResponse.buildMsg(req, invoke(serverContext, remote, method, data, autoObj, null));
 	}
 	
-	public WebView webProcess(ServerContext serverContext, WebRequest req, SessionContext sctx) throws Exception {
+	public WebView webProcess(ServerContext serverContext, WebRequest req, SessionContext sctx) throws Throwable {
 		String remote = req.getRemote();
 		String method = req.getMethod();
 		JSONObject data = req.getData();

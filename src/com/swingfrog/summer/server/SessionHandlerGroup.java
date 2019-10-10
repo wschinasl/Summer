@@ -1,8 +1,8 @@
 package com.swingfrog.summer.server;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
 import com.swingfrog.summer.protocol.SessionRequest;
 
 public class SessionHandlerGroup implements SessionHandler {
@@ -10,7 +10,7 @@ public class SessionHandlerGroup implements SessionHandler {
 	private List<SessionHandler> sessionHandlerList;
 	
 	public SessionHandlerGroup() {
-		sessionHandlerList = new ArrayList<>();
+		sessionHandlerList = Lists.newLinkedList();
 	}
 	
 	public void addSessionHandler(SessionHandler sessionHandler) {
@@ -23,8 +23,8 @@ public class SessionHandlerGroup implements SessionHandler {
 
 	@Override
 	public boolean accpet(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			if (!sessionHandlerList.get(i).accpet(ctx)) {
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			if (!sessionHandler.accpet(ctx)) {
 				return false;
 			}
 		}
@@ -33,22 +33,22 @@ public class SessionHandlerGroup implements SessionHandler {
 
 	@Override
 	public void added(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).added(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.added(ctx);
 		}
 	}
 
 	@Override
 	public void removed(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).removed(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.removed(ctx);
 		}
 	}
 
 	@Override
 	public boolean receive(SessionContext ctx, SessionRequest request) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			if (!sessionHandlerList.get(i).receive(ctx, request)) {
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			if (!sessionHandler.receive(ctx, request)) {
 				return false;
 			}
 		}
@@ -57,43 +57,43 @@ public class SessionHandlerGroup implements SessionHandler {
 
 	@Override
 	public void heartTimeOut(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).heartTimeOut(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.heartTimeOut(ctx);
 		}
 	}
 
 	@Override
 	public void sendTooFastMsg(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).sendTooFastMsg(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.sendTooFastMsg(ctx);
 		}
 	}
 
 	@Override
 	public void lengthTooLongMsg(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).lengthTooLongMsg(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.lengthTooLongMsg(ctx);
 		}
 	}
 
 	@Override
 	public void unableParseMsg(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).unableParseMsg(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.unableParseMsg(ctx);
 		}
 	}
 
 	@Override
 	public void repetitionMsg(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).repetitionMsg(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.repetitionMsg(ctx);
 		}
 	}
 
 	@Override
 	public void sending(SessionContext ctx) {
-		for (int i = 0; i < sessionHandlerList.size(); i ++) {
-			sessionHandlerList.get(i).sending(ctx);
+		for (SessionHandler sessionHandler : sessionHandlerList) {
+			sessionHandler.sending(ctx);
 		}
 	}
 

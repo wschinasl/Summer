@@ -1,5 +1,6 @@
 package com.swingfrog.summer.client;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
@@ -8,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.swingfrog.summer.util.JSONConvertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,28 +74,8 @@ public class PushDispatchMgr {
 					String param = params[i];
 					Type type = paramTypes[i];
 					Parameter parameter = parameters[i];
-					if (type == boolean.class) {
-						obj[i] = data.getBooleanValue(param);
-					} else if (type == byte.class) {
-						obj[i] = data.getByteValue(param);
-					} else if (type == short.class) {
-						obj[i] = data.getShortValue(param);
-					} else if (type == int.class) {
-						obj[i] = data.getIntValue(param);
-					} else if (type == long.class) {
-						obj[i] = data.getLongValue(param);
-					} else if (type == Boolean.class) {
-						obj[i] = data.getBoolean(param);
-					} else if (type == Byte.class) {
-						obj[i] = data.getByte(param);
-					} else if (type == Short.class) {
-						obj[i] = data.getShort(param);
-					} else if (type == Integer.class) {
-						obj[i] = data.getInteger(param);
-					} else if (type == Long.class) {
-						obj[i] = data.getLong(param);
-					} else if (type == String.class) {
-						obj[i] = data.getString(param);
+					if (JSONConvertUtil.containsType(type)) {
+						obj[i] = JSONConvertUtil.convert(type, data, param);
 					} else {
 						if (data.containsKey(param)) {
 							try {
@@ -123,6 +105,8 @@ public class PushDispatchMgr {
 				}
 				try {
 					remoteMod.invoke(remoteObj, obj);
+				} catch (InvocationTargetException e) {
+					log.error(e.getTargetException().getMessage(), e.getTargetException());
 				} catch (Exception e) {
 					log.error(e.getMessage(), e);
 				}

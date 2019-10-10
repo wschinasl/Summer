@@ -78,8 +78,7 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 	}
 	
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, String msg)
-			throws Exception {
+	protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
 		SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
 		long now = Calendar.getInstance().getTimeInMillis();
 		long last = sctx.getLastRecvTime();
@@ -113,23 +112,9 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 								String response = SessionResponse.buildError(request, ce).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
 								write(ctx, sctx, response);
-							} catch (Exception e) {
+							} catch (Throwable e) {
 								log.error(e.getMessage(), e);
-								Throwable cause = e;
-								String response = null;
-								for (int i = 0; i < 5; i ++) {
-									if ((cause = cause.getCause()) != null) {
-										if (cause instanceof CodeException) {
-											response = SessionResponse.buildError(request, (CodeException) cause).toJSONString();
-											break;
-										}
-									} else {
-										break;
-									}
-								}
-								if (response == null) {
-									response = SessionResponse.buildError(request, SessionException.INVOKE_ERROR).toJSONString();									
-								}
+								String response = SessionResponse.buildError(request, SessionException.INVOKE_ERROR).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
 								write(ctx, sctx, response);
 							}

@@ -13,8 +13,12 @@ public class MethodInvoke {
 		this.method = method;
 	}
 	
-	public void invoke() throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		method.invoke(obj);
+	public void invoke() throws Throwable {
+		try {
+			method.invoke(obj);
+		} catch (InvocationTargetException e) {
+			throw e.getTargetException();
+		}
 	}
 
 	public Object getObj() {

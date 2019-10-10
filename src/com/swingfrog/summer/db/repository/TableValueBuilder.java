@@ -1,6 +1,7 @@
 package com.swingfrog.summer.db.repository;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,51 @@ import java.util.stream.Collectors;
 public class TableValueBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(TableValueBuilder.class);
+
+    @FunctionalInterface
+    interface ThreeConsumer<T, U, O> {
+        void accept(T t, U u, O o);
+    }
+
+    private static final Map<Type, ThreeConsumer<Field, Object, Long>> primaryFieldMap = Maps.newHashMap();
+    static {
+        ThreeConsumer<Field, Object, Long> fieldLong = (field, obj, primaryValue) -> {
+            try {
+                field.setLong(obj, primaryValue);
+            } catch (IllegalAccessException e) {
+                log.error(e.getMessage(), e);
+            }
+        };
+        ThreeConsumer<Field, Object, Long> fieldInt = (field, obj, primaryValue) -> {
+            try {
+                field.setInt(obj, primaryValue.intValue());
+            } catch (IllegalAccessException e) {
+                log.error(e.getMessage(), e);
+            }
+        };
+        ThreeConsumer<Field, Object, Long> fieldShort = (field, obj, primaryValue) -> {
+            try {
+                field.setShort(obj, primaryValue.shortValue());
+            } catch (IllegalAccessException e) {
+                log.error(e.getMessage(), e);
+            }
+        };
+        ThreeConsumer<Field, Object, Long> fieldByte = (field, obj, primaryValue) -> {
+            try {
+                field.setByte(obj, primaryValue.byteValue());
+            } catch (IllegalAccessException e) {
+                log.error(e.getMessage(), e);
+            }
+        };
+        primaryFieldMap.put(long.class, fieldLong);
+        primaryFieldMap.put(Long.class, fieldLong);
+        primaryFieldMap.put(int.class, fieldInt);
+        primaryFieldMap.put(Integer.class, fieldInt);
+        primaryFieldMap.put(short.class, fieldShort);
+        primaryFieldMap.put(Short.class, fieldShort);
+        primaryFieldMap.put(byte.class, fieldByte);
+        primaryFieldMap.put(Byte.class, fieldByte);
+    }
 
     public static Object convert(Object obj, Type target) {
         if (TableSupport.isJavaBean(target)) {
@@ -60,20 +106,11 @@ public class TableValueBuilder {
     public static void setPrimaryKeyIntNumberValue(TableMeta tableMeta, Object obj, long primaryValue) {
         Field field = tableMeta.getPrimaryColumn().getField();
         Type type = field.getGenericType();
-        try {
-            if (type == long.class || type == Long.class) {
-                field.setLong(obj, primaryValue);
-            } else if (type == int.class || type == Integer.class) {
-                field.setInt(obj, (int) primaryValue);
-            } else if (type == short.class || type == Short.class) {
-                field.setShort(obj, (short) primaryValue);
-            } else if (type == byte.class || type == Byte.class) {
-                field.setByte(obj, (byte) primaryValue);
-            } else {
-                throw new UnsupportedOperationException("primary key must be number");
-            }
-        } catch (IllegalAccessException e) {
-            log.error(e.getMessage(), e);
+        ThreeConsumer<Field, Object, Long> consumer = primaryFieldMap.get(type);
+        if (consumer != null) {
+            consumer.accept(field, obj, primaryValue);
+        } else {
+            throw new UnsupportedOperationException("primary key must be number");
         }
     }
 

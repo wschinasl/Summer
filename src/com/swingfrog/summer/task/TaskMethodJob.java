@@ -26,11 +26,7 @@ public class TaskMethodJob implements Job{
 		if (methodInvoke != null) {
 			try {
 				methodInvoke.invoke();
-			} catch (IllegalAccessException e) {
-				log.error(e.getMessage(), e);
-			} catch (IllegalArgumentException e) {
-				log.error(e.getMessage(), e);
-			} catch (InvocationTargetException e) {
+			} catch (Throwable e) {
 				log.error(e.getMessage(), e);
 			}
 		}

@@ -263,25 +263,10 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 				} catch (CodeException ce) {
 					log.error(ce.getMessage(), ce);
 					writeResponse(ctx, sctx, request, WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg()));
-				} catch (Exception e) {
+				} catch (Throwable e) {
 					log.error(e.getMessage(), e);
-					Throwable cause = e;
-					WebView webView = null;
-					for (int i = 0; i < 5; i ++) {
-						if ((cause = cause.getCause()) != null) {
-							if (cause instanceof CodeException) {
-								CodeException ce = (CodeException) cause;
-								webView = WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg());
-								break;
-							}
-						} else {
-							break;
-						}
-					}
-					if (webView == null) {
-						CodeMsg ce = SessionException.INVOKE_ERROR;
-						webView = WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg());
-					}
+					CodeMsg ce = SessionException.INVOKE_ERROR;
+					WebView webView = WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg());;
 					writeResponse(ctx, sctx, request, webView);
 				}
 			};
