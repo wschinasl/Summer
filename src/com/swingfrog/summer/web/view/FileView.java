@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
 
 import javax.activation.MimetypesFileTypeMap;
 
+import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.stream.ChunkedFile;
 import io.netty.handler.stream.ChunkedInput;
@@ -15,6 +17,7 @@ public class FileView implements WebView {
 
 	private RandomAccessFile file;
 	private String contentType;
+	private volatile Map<String, String> headers;
 	
 	public FileView(String fileName) throws IOException {
 		file = new RandomAccessFile(fileName, "r");
@@ -53,6 +56,22 @@ public class FileView implements WebView {
 	@Override
 	public String toString() {
 		return "FileView";
+	}
+
+	public void addHeader(String key, String value) {
+		if (headers == null) {
+			synchronized (this) {
+				if (headers == null) {
+					headers = Maps.newConcurrentMap();
+				}
+			}
+		}
+		headers.put(key, value);
+	}
+
+	@Override
+	public Map<String, String> getHeaders() {
+		return headers;
 	}
 
 }

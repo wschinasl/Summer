@@ -6,6 +6,7 @@ import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.collect.Maps;
 import com.swingfrog.summer.web.WebMgr;
 
 import freemarker.template.Template;
@@ -20,6 +21,7 @@ public class ModelView implements WebView {
 	private String view;
 	private Map<String, Object> map;
 	private ByteBuf byteBuf;
+	private volatile Map<String, String> headers;
 	
 	public ModelView(String view) {
 		this.view = view;
@@ -95,4 +97,21 @@ public class ModelView implements WebView {
 	public String toString() {
 		return "ModelView";
 	}
+
+	public void addHeader(String key, String value) {
+		if (headers == null) {
+			synchronized (this) {
+				if (headers == null) {
+					headers = Maps.newConcurrentMap();
+				}
+			}
+		}
+		headers.put(key, value);
+	}
+
+	@Override
+	public Map<String, String> getHeaders() {
+		return headers;
+	}
+
 }
