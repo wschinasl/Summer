@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.Calendar;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,7 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 		}
 		serverContext.getSessionContextGroup().createSession(ctx);
 		SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+		sctx.clearSessionId();
 		if (!serverContext.getSessionHandlerGroup().accpet(sctx)) {
 			log.warn("not accpet clinet {}", sctx);
 			ctx.close();
@@ -129,6 +131,7 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 				if (uri == null) {
 					return;
 				}
+				sctx.setSessionId(parseSessionId(httpRequest.headers().get(HttpHeaderNames.COOKIE)));
 				HttpMethod method = httpRequest.method();
 				if (HttpMethod.GET.equals(method)) {
 					doGet(ctx, sctx);
@@ -312,6 +315,12 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 			response.headers().set(HttpHeaderNames.CONTENT_LENGTH, webView.getLength());
 			response.headers().set(HttpHeaderNames.SERVER, Summer.NAME);
 			response.headers().set(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+			if (sctx.getSessionId() == null) {
+				response.headers().set(HttpHeaderNames.SET_COOKIE, createSessionId());
+			}
+			if (webView.getHeaders() != null) {
+				webView.getHeaders().forEach((key, value) -> response.headers().set(key, value));
+			}
 			ctx.write(response);
 			ctx.write(webView.getChunkedInput());
 			ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
@@ -319,4 +328,22 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 			log.error(e.getMessage(), e);
 		}
 	}
+
+	private String createSessionId() {
+		return "sessionId=" + UUID.randomUUID().toString().replace("-", "").toLowerCase();
+	}
+
+	private String parseSessionId(String cookie) {
+		if (cookie == null)
+			return null;
+		String sessionId = "sessionId=";
+		int index = cookie.indexOf(sessionId);
+		if (index == -1)
+			return null;
+		if (index + sessionId.length() + 32 > cookie.length()) {
+			return null;
+		}
+		return cookie.substring(index + sessionId.length(), index + sessionId.length() + 32);
+	}
+
 }

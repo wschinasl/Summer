@@ -22,6 +22,9 @@ public class SessionContext {
 	public void setSessionId(String sessionId) {
 		this.sessionId = sessionId;
 	}
+	public void clearSessionId() {
+		sessionId = null;
+	}
 	public String getAddress() {
 		return address;
 	}
