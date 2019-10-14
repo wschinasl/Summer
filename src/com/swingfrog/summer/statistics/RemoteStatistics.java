@@ -87,6 +87,9 @@ public class RemoteStatistics {
     }
 
     private void exportToFile() {
+        if (remoteMethodMap.isEmpty()) {
+            return;
+        }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
         File file = new File(exportDir);
         file.mkdirs();
