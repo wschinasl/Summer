@@ -7,6 +7,7 @@ import org.apache.commons.dbutils.ColumnHandler;
 import java.lang.reflect.Type;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.ServiceLoader;
 
 public class RepositoryBeanProcessor extends BeanProcessor {
@@ -30,7 +31,7 @@ public class RepositoryBeanProcessor extends BeanProcessor {
             }
         }
 
-        if (!match) {
+        if (!match && propType != Date.class && propType != Enum.class) {
             retval = JSON.parseObject(rs.getString(index), (Type) propType);
         }
 

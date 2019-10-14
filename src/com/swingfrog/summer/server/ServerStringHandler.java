@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.Calendar;
 
+import com.swingfrog.summer.statistics.RemoteStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,24 +100,29 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 					sctx.setCurrentMsgId(request.getId());
 					log.debug("server request {} from {}", msg, sctx);
 					if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {
+						RemoteStatistics.start(request, msg.length());
 						Runnable event = ()->{
 							if (!ctx.channel().isActive()) {
+								RemoteStatistics.discard(request);
 								return;
 							}
 							try {
 								String response = RemoteDispatchMgr.get().process(serverContext, request, sctx).toJSONString();
 								log.debug("server response {} to {}", response, sctx);
 								write(ctx, sctx, response);
+								RemoteStatistics.finish(request, response.length());
 							} catch (CodeException ce) {
 								log.warn(ce.getMessage(), ce);
 								String response = SessionResponse.buildError(request, ce).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
 								write(ctx, sctx, response);
+								RemoteStatistics.finish(request, response.length());
 							} catch (Throwable e) {
 								log.error(e.getMessage(), e);
 								String response = SessionResponse.buildError(request, SessionException.INVOKE_ERROR).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
 								write(ctx, sctx, response);
+								RemoteStatistics.finish(request, response.length());
 							}
 						};
 						Method method = RemoteDispatchMgr.get().getMethod(request);

@@ -8,6 +8,7 @@ import java.net.URLDecoder;
 import java.util.Calendar;
 import java.util.UUID;
 
+import com.swingfrog.summer.statistics.RemoteStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -254,7 +255,8 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 	private void doWork(ChannelHandlerContext ctx, SessionContext sctx, WebRequest request) {
 		log.debug("server request {} from {}", request, sctx);
 		if (serverContext.getSessionHandlerGroup().receive(sctx, request)) {
-			Runnable event = ()->{
+			RemoteStatistics.start(request, 0);
+			Runnable event = ()-> {
 				try {
 					WebView webView = RemoteDispatchMgr.get().webProcess(serverContext, request, sctx);
 					if (webView == null) {
@@ -265,13 +267,15 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 					}
 				} catch (CodeException ce) {
 					log.error(ce.getMessage(), ce);
-					writeResponse(ctx, sctx, request, WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg()));
+					WebView webView = WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg());
+					writeResponse(ctx, sctx, request, webView);
 				} catch (Throwable e) {
 					log.error(e.getMessage(), e);
 					CodeMsg ce = SessionException.INVOKE_ERROR;
-					WebView webView = WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg());;
+					WebView webView = WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg());
 					writeResponse(ctx, sctx, request, webView);
 				}
+				RemoteStatistics.finish(request, 0);
 			};
 			Method method = RemoteDispatchMgr.get().getMethod(request);
 			if (method != null) {

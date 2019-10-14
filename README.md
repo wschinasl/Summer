@@ -21,8 +21,10 @@
 ## 前言
 
 ## 更新
-### 2019.10.12
+### 2019.10.14
 1. http协议下，实现了cookie机制，sessionId是识别唯一用户的标志，而sessionContext只是链路。当用户请求接口携带的cookie数据中不存在sessionId时，响应时会下发通过UUID生成的32位字符串作为sessionId，用户下一次请求时就会携带有sessionId。通过sessionContext.getSessionId()获取sessionId，通过sessionContext.clearSessionId()清空sessionId。
+2. 新增一个用于统计接口调用情况的静态类RemoteStatistics。
+3. 修复持久化层仓库模式，无法解析Date的问题。
 
 ### 2019.08.30
 1. 移除之前实现的简单持久化层(2019.06.22的第三点)

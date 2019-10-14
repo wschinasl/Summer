@@ -7,6 +7,7 @@ import java.util.Set;
 import com.swingfrog.summer.db.repository.AsyncCacheRepositoryMgr;
 import com.swingfrog.summer.db.repository.RepositoryMgr;
 import com.swingfrog.summer.lifecycle.Lifecycle;
+import com.swingfrog.summer.statistics.RemoteStatistics;
 import org.apache.log4j.PropertyConfigurator;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
@@ -115,6 +116,7 @@ public class Summer {
 						l.stop();
 					});
 			AsyncCacheRepositoryMgr.get().shutdown();
+			RemoteStatistics.print();
 		}));
 	}
 	
