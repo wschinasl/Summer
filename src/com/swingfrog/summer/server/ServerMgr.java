@@ -39,7 +39,7 @@ public class ServerMgr {
 		if (serverConfig == null) {
 			throw new NullPointerException("serverConfig is null");
 		}
-		server = new Server(serverConfig);
+		server = Server.create(serverConfig);
 		Iterator<Class<?>> iteratorHandler = ContainerMgr.get().iteratorHandlerList();
 		while (iteratorHandler.hasNext()) {
 			Class<?> clazz = iteratorHandler.next();
@@ -49,7 +49,7 @@ public class ServerMgr {
 		ServerConfig[] minorConfigs = ConfigMgr.get().getMinorConfigs();
 		if (minorConfigs != null && minorConfigs.length > 0) {
 			for (ServerConfig sc : minorConfigs) {
-				Server s = new Server(sc);
+				Server s = Server.createMinor(sc, server.getBossGroup(), server.getWorkerGroup(), server.getEventLoopGroup());
 				Iterator<Class<?>> sciteratorHandler = ContainerMgr.get().iteratorHandlerList(sc.getServerName());
 				if (sciteratorHandler != null) {
 					while (sciteratorHandler.hasNext()) {

@@ -1,13 +1,12 @@
 package com.swingfrog.summer.db.repository;
 
-import com.alibaba.fastjson.JSON;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.swingfrog.summer.db.BaseDao;
 import org.apache.commons.dbutils.BasicRowProcessor;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +54,7 @@ public abstract class RepositoryDao<T, K> extends BaseDao<T> {
             if (maxPk == null) {
                 primaryKey = new AtomicLong(autoIncrement());
             } else {
-                primaryKey = new AtomicLong((long) maxPk);
+                primaryKey = new AtomicLong(Long.valueOf(maxPk.toString()));
             }
         }
         insertSql = SqlBuilder.getInsert(tableMeta);
@@ -173,6 +172,12 @@ public abstract class RepositoryDao<T, K> extends BaseDao<T> {
         List<String> fields = TableValueBuilder.listValidFieldByOptional(tableMeta, optional);
         String sql = SqlBuilder.getPrimaryColumnSelectField(tableMeta, fields);
         return list(sql, TableValueBuilder.listValidValueByOptional(tableMeta, optional, fields)).stream()
+                .map(obj -> (K) TableValueBuilder.getPrimaryKeyValue(tableMeta, obj))
+                .collect(Collectors.toList());
+    }
+
+    protected List<K> listPrimaryKey() {
+        return list(SqlBuilder.getPrimaryColumnSelectField(tableMeta, ImmutableList.of())).stream()
                 .map(obj -> (K) TableValueBuilder.getPrimaryKeyValue(tableMeta, obj))
                 .collect(Collectors.toList());
     }

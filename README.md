@@ -20,7 +20,12 @@
 
 ## 前言
 
+
 ## 更新
+### 2019.10.16
+1. 修复持久化层仓库模式，list无法正确返回数据，并进行优化，当多次list之间的间隔时间小于缓存过期时间时，可直接命中缓存。
+2. 从端口minor新增配置useMainServerThreadPool，默认为false，当置为true时，从端口将使用主端口的线程池 (监听线程池, 读写线程池, 业务线程池)。
+
 ### 2019.10.14
 1. http协议下，实现了cookie机制，sessionId是识别唯一用户的标志，而sessionContext只是链路。当用户请求接口携带的cookie数据中不存在sessionId时，响应时会下发通过UUID生成的32位字符串作为sessionId，用户下一次请求时就会携带有sessionId。通过sessionContext.getSessionId()获取sessionId，通过sessionContext.clearSessionId()清空sessionId。
 2. 新增一个用于统计接口调用情况的静态类RemoteStatistics。
@@ -277,6 +282,8 @@ minor.gate_s2.heartSec=40
 minor.gate_s2.coldDownMs=10
 minor.gate_s2.allowAddressEnable=false
 minor.gate_s2.allowAddressList=
+#使用主端口的线程池 (监听线程池, 读写线程池, 业务线程池) 默认为false
+minor.gate_s2.useMainServerThreadPool=true
 
 #连接其他服务器的列表
 server.clientList=account_s1,account_s2

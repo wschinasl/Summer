@@ -34,6 +34,8 @@ public class ServerConfig {
 	private boolean allowAddressEnable;
 	/**允许客户端地址*/
 	private String[] allowAddressList;
+	/**使用主端口的线程池 (监听线程池, 读写线程池, 业务线程池)*/
+	private boolean useMainServerThreadPool;
 	
 	public String getCluster() {
 		return cluster;
@@ -125,13 +127,33 @@ public class ServerConfig {
 	public void setAllowAddressList(String[] allowAddressList) {
 		this.allowAddressList = allowAddressList;
 	}
+	public boolean isUseMainServerThreadPool() {
+		return useMainServerThreadPool;
+	}
+	public void setUseMainServerThreadPool(boolean useMainServerThreadPool) {
+		this.useMainServerThreadPool = useMainServerThreadPool;
+	}
+
 	@Override
 	public String toString() {
-		return "ServerConfig [cluster=" + cluster + ", serverName=" + serverName + ", address=" + address + ", port="
-				+ port + ", protocol=" + protocol + ", charset=" + charset + ", password=" + password + ", bossThread="
-				+ bossThread + ", workerThread=" + workerThread + ", eventThread=" + eventThread + ", msgLength="
-				+ msgLength + ", heartSec=" + heartSec + ", coldDownMs=" + coldDownMs + ", allowAddressEnable="
-				+ allowAddressEnable + ", allowAddressList=" + Arrays.toString(allowAddressList) + "]";
+		return "ServerConfig{" +
+				"cluster='" + cluster + '\'' +
+				", serverName='" + serverName + '\'' +
+				", address='" + address + '\'' +
+				", port=" + port +
+				", protocol='" + protocol + '\'' +
+				", charset='" + charset + '\'' +
+				", password='" + password + '\'' +
+				", bossThread=" + bossThread +
+				", workerThread=" + workerThread +
+				", eventThread=" + eventThread +
+				", msgLength=" + msgLength +
+				", heartSec=" + heartSec +
+				", coldDownMs=" + coldDownMs +
+				", allowAddressEnable=" + allowAddressEnable +
+				", allowAddressList=" + Arrays.toString(allowAddressList) +
+				", useMainServerThreadPool=" + useMainServerThreadPool +
+				'}';
 	}
-	
+
 }

@@ -17,7 +17,7 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
 
     private static final String PREFIX = "CacheRepositoryDao";
     private T EMPTY;
-    private final Cache<Object, T> cache = CacheBuilder.newBuilder()
+    private final Cache<K, T> cache = CacheBuilder.newBuilder()
             .maximumSize(maxSize())
             .expireAfterAccess(expireTime(), TimeUnit.MILLISECONDS)
             .build();
@@ -126,7 +126,10 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
         List<T> list;
         if (pkList.isEmpty()) {
             super.listPrimaryKey(optional).forEach(this::get);
-            list = cache.asMap().values().stream().sorted(Comparator.comparingInt(Objects::hashCode)).filter(Objects::nonNull).collect(Collectors.toList());
+            list = cache.asMap().values().stream()
+                    .filter(obj -> obj != EMPTY)
+                    .sorted(Comparator.comparingInt(Objects::hashCode))
+                    .collect(Collectors.toList());
         } else {
             if (pkList.size() == 1) {
                 list = pkList.get(0).stream().map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
@@ -163,12 +166,16 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
         if (time - expireTime() >= findAllTime.get()) {
             synchronized (StringUtil.getString(PREFIX, tableMeta.getName(), "list")) {
                 if (time - expireTime() >= findAllTime.get()) {
-                    super.list().forEach(this::addCache);
+                    listPrimaryKey().forEach(this::get);
                 }
-                findAllTime.set(time);
             }
         }
-        return cache.asMap().values().stream().sorted(Comparator.comparingInt(obj -> TableValueBuilder.getPrimaryKeyValue(tableMeta, obj).hashCode())).collect(Collectors.toList());
+        findAllTime.set(time);
+        return cache.asMap().keySet().stream()
+                .map(this::get)
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparingInt(obj -> TableValueBuilder.getPrimaryKeyValue(tableMeta, obj).hashCode()))
+                .collect(Collectors.toList());
     }
 
     protected List<K> listPrimaryValueByCacheKey(String column, Object cacheValue) {

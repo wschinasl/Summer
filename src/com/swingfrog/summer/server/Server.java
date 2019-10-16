@@ -21,10 +21,19 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 public class Server {
 
 	private static final Logger log = LoggerFactory.getLogger(Server.class);
-	private ServerContext serverContext;
-	private ServerPush serverPush;
+	private final ServerContext serverContext;
+	private final ServerPush serverPush;
+	private final EventLoopGroup bossGroup;
+	private final EventLoopGroup workerGroup;
 
-	public Server(ServerConfig config) {
+	public Server(ServerConfig config, EventLoopGroup bossGroup, EventLoopGroup workerGroup, EventLoopGroup eventLoopGroup) {
+		serverContext = new ServerContext(config, new SessionHandlerGroup(), new SessionContextGroup(), eventLoopGroup);
+		serverPush = new ServerPush(serverContext);
+		this.bossGroup = bossGroup;
+		this.workerGroup = workerGroup;
+	}
+
+	public static Server create(ServerConfig config) {
 		log.info("server cluster {}", config.getCluster());
 		log.info("server serverName {}", config.getServerName());
 		log.info("server address {}", config.getAddress());
@@ -40,14 +49,43 @@ public class Server {
 		log.info("server coldDownMs {}", config.getColdDownMs());
 		log.info("server allowAddressEnable {}", config.isAllowAddressEnable());
 		log.info("server allowAddressList {}", Arrays.toString(config.getAllowAddressList()));
-		serverContext = new ServerContext(config, new SessionHandlerGroup(), new SessionContextGroup(),
+		return new Server(config,
+				new NioEventLoopGroup(config.getBossThread(), new DefaultThreadFactory("ServerBoss", true)),
+				new NioEventLoopGroup(config.getWorkerThread(), new DefaultThreadFactory("ServerWorker", true)),
 				new NioEventLoopGroup(config.getEventThread(), new DefaultThreadFactory("ServerEvent", true)));
-		serverPush = new ServerPush(serverContext);
+	}
+
+	public static Server createMinor(ServerConfig config, EventLoopGroup bossGroup, EventLoopGroup workerGroup, EventLoopGroup eventLoopGroup) {
+		log.info("minor cluster {}", config.getCluster());
+		log.info("minor serverName {}", config.getServerName());
+		log.info("minor address {}", config.getAddress());
+		log.info("minor port {}", config.getPort());
+		log.info("minor protocol {}", config.getProtocol());
+		log.info("minor charset {}", config.getCharset());
+		log.info("minor password {}", config.getPassword());
+		if (config.isUseMainServerThreadPool()) {
+			log.info("minor use main server thread pool");
+		} else {
+			log.info("minor bossThread {}", config.getBossThread());
+			log.info("minor workerThread {}", config.getWorkerThread());
+			log.info("minor eventThread {}", config.getEventThread());
+		}
+		log.info("minor msgLength {}", config.getMsgLength());
+		log.info("minor heartSec {}", config.getHeartSec());
+		log.info("minor coldDownMs {}", config.getColdDownMs());
+		log.info("minor allowAddressEnable {}", config.isAllowAddressEnable());
+		log.info("minor allowAddressList {}", Arrays.toString(config.getAllowAddressList()));
+		if (config.isUseMainServerThreadPool()) {
+			return new Server(config, bossGroup, workerGroup, eventLoopGroup);
+		} else {
+			return new Server(config,
+					new NioEventLoopGroup(config.getBossThread(), new DefaultThreadFactory("ServerBoss_" + config.getServerName(), true)),
+					new NioEventLoopGroup(config.getWorkerThread(), new DefaultThreadFactory("ServerWorker_" + config.getServerName(), true)),
+					new NioEventLoopGroup(config.getEventThread(), new DefaultThreadFactory("ServerEvent_" + config.getServerName(), true)));
+		}
 	}
 
 	public void launch() {
-		EventLoopGroup bossGroup = new NioEventLoopGroup(serverContext.getConfig().getBossThread(), new DefaultThreadFactory("ServerBoss", true));
-		EventLoopGroup workerGroup = new NioEventLoopGroup(serverContext.getConfig().getWorkerThread(), new DefaultThreadFactory("ServerWorker", true));
 		try {
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup)
@@ -92,6 +130,14 @@ public class Server {
 
 	public EventLoopGroup getEventLoopGroup() {
 		return serverContext.getEventGroup();
+	}
+
+	public EventLoopGroup getBossGroup() {
+		return bossGroup;
+	}
+
+	public EventLoopGroup getWorkerGroup() {
+		return workerGroup;
 	}
 	
 }
