@@ -2,19 +2,18 @@ package com.swingfrog.summer.concurrent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.swingfrog.summer.server.SessionContext;
 
-import io.netty.channel.EventLoopGroup;
-
 public class SessionQueueMgr {
 
 	private static final Logger log = LoggerFactory.getLogger(SessionQueueMgr.class);
 	
-	private EventLoopGroup eventLoopGroup;
+	private ExecutorService eventExecutor;
 	private Map<SessionContext, RunnableQueue> singleQueueMap;
 	
 	private static class SingleCase {
@@ -29,8 +28,8 @@ public class SessionQueueMgr {
 		return SingleCase.INSTANCE;
 	}
 	
-	public void init(EventLoopGroup eventLoopGroup) {
-		this.eventLoopGroup = eventLoopGroup;
+	public void init(ExecutorService eventExecutor) {
+		this.eventExecutor = eventExecutor;
 	}
 	
 	public RunnableQueue getRunnableQueue(SessionContext key) {
@@ -75,7 +74,7 @@ public class SessionQueueMgr {
 		if (rq.getState().compareAndSet(true, false)) {
 			Runnable runnable = rq.getQueue().poll();
 			if (runnable != null) {
-				eventLoopGroup.execute(()->{
+				eventExecutor.execute(()->{
 					try {						
 						runnable.run();
 					} catch (Exception e) {

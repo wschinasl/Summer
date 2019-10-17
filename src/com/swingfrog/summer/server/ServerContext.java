@@ -1,26 +1,33 @@
 package com.swingfrog.summer.server;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.swingfrog.summer.config.ServerConfig;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultThreadFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class ServerContext {
 
 	private ServerConfig config;
 	private SessionHandlerGroup sessionHandlerGroup;
 	private SessionContextGroup sessionContextGroup;
-	private EventLoopGroup eventGroup;
-	private EventLoopGroup pushGroup;
+	private ExecutorService eventExecutor;
+	private ExecutorService pushExecutor;
 	
-	public ServerContext(ServerConfig config, SessionHandlerGroup sessionHandlerGroup,
-			SessionContextGroup sessionContextGroup, EventLoopGroup eventGroup) {
+	public ServerContext(ServerConfig config,
+						 SessionHandlerGroup sessionHandlerGroup,
+						 SessionContextGroup sessionContextGroup,
+						 ExecutorService eventExecutor,
+						 ExecutorService pushExecutor) {
 		this.config = config;
 		this.sessionHandlerGroup = sessionHandlerGroup;
 		this.sessionContextGroup = sessionContextGroup;
-		this.eventGroup = eventGroup;
-		this.pushGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("ServerPush", true));
+		this.eventExecutor = eventExecutor;
+		this.pushExecutor = pushExecutor;
 	}
 	public ServerConfig getConfig() {
 		return config;
@@ -40,13 +47,13 @@ public class ServerContext {
 	public void setSessionContextGroup(SessionContextGroup sessionContextGroup) {
 		this.sessionContextGroup = sessionContextGroup;
 	}
-	public EventLoopGroup getEventGroup() {
-		return eventGroup;
+	public ExecutorService getEventExecutor() {
+		return eventExecutor;
 	}
-	public void setEventGroup(EventLoopGroup eventGroup) {
-		this.eventGroup = eventGroup;
+	public void setEventExecutor(ExecutorService eventExecutor) {
+		this.eventExecutor = eventExecutor;
 	}
-	public EventLoopGroup getPushGroup() {
-		return pushGroup;
+	public ExecutorService getPushExecutor() {
+		return pushExecutor;
 	}
 }

@@ -2,7 +2,11 @@ package com.swingfrog.summer.server;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import com.swingfrog.summer.util.ThreadCountUtil;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +30,8 @@ public class Server {
 	private final EventLoopGroup bossGroup;
 	private final EventLoopGroup workerGroup;
 
-	public Server(ServerConfig config, EventLoopGroup bossGroup, EventLoopGroup workerGroup, EventLoopGroup eventLoopGroup) {
-		serverContext = new ServerContext(config, new SessionHandlerGroup(), new SessionContextGroup(), eventLoopGroup);
+	public Server(ServerConfig config, EventLoopGroup bossGroup, EventLoopGroup workerGroup, ExecutorService eventExecutor, ExecutorService pushExecutor) {
+		serverContext = new ServerContext(config, new SessionHandlerGroup(), new SessionContextGroup(), eventExecutor, pushExecutor);
 		serverPush = new ServerPush(serverContext);
 		this.bossGroup = bossGroup;
 		this.workerGroup = workerGroup;
@@ -49,13 +53,15 @@ public class Server {
 		log.info("server coldDownMs {}", config.getColdDownMs());
 		log.info("server allowAddressEnable {}", config.isAllowAddressEnable());
 		log.info("server allowAddressList {}", Arrays.toString(config.getAllowAddressList()));
+		config.setUseMainServerThreadPool(false);
 		return new Server(config,
-				new NioEventLoopGroup(config.getBossThread(), new DefaultThreadFactory("ServerBoss", true)),
-				new NioEventLoopGroup(config.getWorkerThread(), new DefaultThreadFactory("ServerWorker", true)),
-				new NioEventLoopGroup(config.getEventThread(), new DefaultThreadFactory("ServerEvent", true)));
+				new NioEventLoopGroup(config.getBossThread(), new DefaultThreadFactory("ServerBoss")),
+				new NioEventLoopGroup(config.getWorkerThread(), new DefaultThreadFactory("ServerWorker")),
+				Executors.newFixedThreadPool(ThreadCountUtil.convert(config.getEventThread()), new DefaultThreadFactory("ServerEvent")),
+				Executors.newSingleThreadExecutor(new DefaultThreadFactory("ServerPush")));
 	}
 
-	public static Server createMinor(ServerConfig config, EventLoopGroup bossGroup, EventLoopGroup workerGroup, EventLoopGroup eventLoopGroup) {
+	public static Server createMinor(ServerConfig config, EventLoopGroup bossGroup, EventLoopGroup workerGroup, ExecutorService eventExecutor, ExecutorService pushExecutor) {
 		log.info("minor cluster {}", config.getCluster());
 		log.info("minor serverName {}", config.getServerName());
 		log.info("minor address {}", config.getAddress());
@@ -76,12 +82,13 @@ public class Server {
 		log.info("minor allowAddressEnable {}", config.isAllowAddressEnable());
 		log.info("minor allowAddressList {}", Arrays.toString(config.getAllowAddressList()));
 		if (config.isUseMainServerThreadPool()) {
-			return new Server(config, bossGroup, workerGroup, eventLoopGroup);
+			return new Server(config, bossGroup, workerGroup, eventExecutor, pushExecutor);
 		} else {
 			return new Server(config,
 					new NioEventLoopGroup(config.getBossThread(), new DefaultThreadFactory("ServerBoss_" + config.getServerName(), true)),
 					new NioEventLoopGroup(config.getWorkerThread(), new DefaultThreadFactory("ServerWorker_" + config.getServerName(), true)),
-					new NioEventLoopGroup(config.getEventThread(), new DefaultThreadFactory("ServerEvent_" + config.getServerName(), true)));
+					Executors.newFixedThreadPool(ThreadCountUtil.convert(config.getEventThread()), new DefaultThreadFactory("ServerEvent_" + config.getServerName())),
+					Executors.newSingleThreadExecutor(new DefaultThreadFactory("ServerPush_" + config.getServerName())));
 		}
 	}
 
@@ -95,9 +102,41 @@ public class Server {
 			b.childHandler(new ServerInitializer(serverContext));
 			b.bind(serverContext.getConfig().getAddress(), serverContext.getConfig().getPort()).sync();
 			startCheckHeartTimeTask();
-			log.info("server launch success");
+			log.info("server[{}] launch success", serverContext.getConfig().getServerName());
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
+		}
+	}
+
+	public void shutdown() {
+		log.info("server[{}] shutdown", serverContext.getConfig().getServerName());
+		if (!serverContext.getConfig().isUseMainServerThreadPool()) {
+			serverContext.getEventExecutor().shutdown();
+			try {
+				while (!serverContext.getEventExecutor().isTerminated()) {
+					serverContext.getEventExecutor().awaitTermination(1, TimeUnit.SECONDS);
+				}
+			} catch (InterruptedException e){
+				log.error(e.getMessage(), e);
+			}
+			serverContext.getPushExecutor().shutdown();
+			try {
+				while (!serverContext.getPushExecutor().isTerminated()) {
+					serverContext.getPushExecutor().awaitTermination(1, TimeUnit.SECONDS);
+				}
+			} catch (InterruptedException e){
+				log.error(e.getMessage(), e);
+			}
+			try {
+				bossGroup.shutdownGracefully().sync();
+			} catch (InterruptedException e) {
+				log.error(e.getMessage(), e);
+			}
+			try {
+				workerGroup.shutdownGracefully().sync();
+			} catch (InterruptedException e) {
+				log.error(e.getMessage(), e);
+			}
 		}
 	}
 
@@ -128,8 +167,12 @@ public class Server {
 		}));
 	}
 
-	public EventLoopGroup getEventLoopGroup() {
-		return serverContext.getEventGroup();
+	public ExecutorService getEventExecutor() {
+		return serverContext.getEventExecutor();
+	}
+
+	public ExecutorService getPushExecutor() {
+		return serverContext.getPushExecutor();
 	}
 
 	public EventLoopGroup getBossGroup() {

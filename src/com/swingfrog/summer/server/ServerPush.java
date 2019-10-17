@@ -78,7 +78,7 @@ public class ServerPush {
 	
 	public void asyncPushToSessionContext(SessionContext sessionContext, String remote, String method, Object data) {
 		String msg = SessionResponse.buildPush(remote, method, data).toJSONString();
-		serverContext.getPushGroup().execute(()->{
+		serverContext.getPushExecutor().execute(()->{
 			log.debug("server push to {} {}", sessionContext, msg);
 			ChannelHandlerContext ctx = serverContext.getSessionContextGroup().getChannelBySession(sessionContext);
 			write(ctx, sessionContext, msg);
@@ -95,7 +95,7 @@ public class ServerPush {
 	public void asyncPushToSessionContexts(List<SessionContext> sessionContexts, String remote, String method, Object data) {
 		SessionContextGroup group = serverContext.getSessionContextGroup();
 		String msg = SessionResponse.buildPush(remote, method, data).toJSONString();
-		serverContext.getPushGroup().execute(()->{
+		serverContext.getPushExecutor().execute(()->{
 			log.debug("server push to {} {}", sessionContexts, msg);
 			for (int i = 0; i < sessionContexts.size(); i++) {
 				ChannelHandlerContext ctx = group.getChannelBySession(sessionContexts.get(i));
@@ -119,7 +119,7 @@ public class ServerPush {
 	public void asyncPushToAll(String remote, String method, Object data) {
 		SessionContextGroup group = serverContext.getSessionContextGroup();
 		String msg = SessionResponse.buildPush(remote, method, data).toJSONString();
-		serverContext.getPushGroup().execute(()->{
+		serverContext.getPushExecutor().execute(()->{
 			log.debug("server push to all {}", msg);
 			Iterator<ChannelHandlerContext> ite = group.iteratorChannel();
 			while (ite.hasNext()) {

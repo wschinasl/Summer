@@ -146,11 +146,11 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 								if (ContainerMgr.get().isSessionQueue(method)) {
 									SessionQueueMgr.get().execute(sctx, event);
 								} else {
-									serverContext.getEventGroup().execute(event);
+									serverContext.getEventExecutor().execute(event);
 								}
 							}
 						} else {
-							serverContext.getEventGroup().execute(event);
+							serverContext.getEventExecutor().execute(event);
 						}
 					}
 				} else {

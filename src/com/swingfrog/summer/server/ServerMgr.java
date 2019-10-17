@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,7 @@ public class ServerMgr {
 		ServerConfig[] minorConfigs = ConfigMgr.get().getMinorConfigs();
 		if (minorConfigs != null && minorConfigs.length > 0) {
 			for (ServerConfig sc : minorConfigs) {
-				Server s = Server.createMinor(sc, server.getBossGroup(), server.getWorkerGroup(), server.getEventLoopGroup());
+				Server s = Server.createMinor(sc, server.getBossGroup(), server.getWorkerGroup(), server.getEventExecutor(), server.getPushExecutor());
 				Iterator<Class<?>> sciteratorHandler = ContainerMgr.get().iteratorHandlerList(sc.getServerName());
 				if (sciteratorHandler != null) {
 					while (sciteratorHandler.hasNext()) {
@@ -68,9 +69,16 @@ public class ServerMgr {
 		log.info("server launch...");
 		server.launch();
 		for(Entry<String, Server> entry : serverMap.entrySet()) {
-			log.info("server [{}] launch...", entry.getKey());
 			entry.getValue().launch();
 		}
+	}
+
+	public void shutdown() {
+		log.info("server shutdown...");
+		for(Entry<String, Server> entry : serverMap.entrySet()) {
+			entry.getValue().shutdown();
+		}
+		server.shutdown();
 	}
 	
 	public ServerPush getServerPush() {
@@ -81,8 +89,8 @@ public class ServerMgr {
 		server.closeSession(sctx);
 	}
 	
-	public EventLoopGroup getEventLoopGroup() {
-		return server.getEventLoopGroup();
+	public ExecutorService getEventExecutor() {
+		return server.getEventExecutor();
 	}
 	
 	public ServerPush getServerPush(String serverName) {
@@ -93,8 +101,8 @@ public class ServerMgr {
 		serverMap.get(serverName).closeSession(sctx);
 	}
 	
-	public EventLoopGroup getEventLoopGroup(String serverName) {
-		return serverMap.get(serverName).getEventLoopGroup();
+	public ExecutorService getEventExecutor(String serverName) {
+		return serverMap.get(serverName).getEventExecutor();
 	}
 	
 }

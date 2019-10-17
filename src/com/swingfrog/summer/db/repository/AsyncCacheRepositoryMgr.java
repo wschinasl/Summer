@@ -1,7 +1,8 @@
 package com.swingfrog.summer.db.repository;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.swingfrog.summer.config.ConfigUtil;
+import com.swingfrog.summer.util.ThreadCountUtil;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.internal.ConcurrentSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class AsyncCacheRepositoryMgr {
 
@@ -39,9 +41,7 @@ public class AsyncCacheRepositoryMgr {
         ConfigUtil.loadDataWithBean(pro, "asyncCache.", config);
         in.close();
         pro.clear();
-        if (config.getCoreThread() <= 0) {
-            config.setCoreThread(1);
-        }
+        config.setCoreThread(ThreadCountUtil.convert(config.getCoreThread()));
         log.info("async cache repository manager loading config, core thread num[{}]", config.getCoreThread());
     }
 
@@ -49,6 +49,13 @@ public class AsyncCacheRepositoryMgr {
         if (scheduledExecutor != null) {
             log.info("async cache repository manager shutdown");
             scheduledExecutor.shutdown();
+            try {
+                while (!scheduledExecutor.isTerminated()) {
+                    scheduledExecutor.awaitTermination(1, TimeUnit.SECONDS);
+                }
+            } catch (InterruptedException e){
+                log.error(e.getMessage(), e);
+            }
         }
         hooks.forEach(Runnable::run);
     }
@@ -59,7 +66,7 @@ public class AsyncCacheRepositoryMgr {
                 if (scheduledExecutor == null) {
                     scheduledExecutor = Executors.newScheduledThreadPool(
                             config.getCoreThread(),
-                            new ThreadFactoryBuilder().setNameFormat("AsyncCacheRepositoryMgr-%s").build());
+                            new DefaultThreadFactory("AsyncCacheRepositoryMgr"));
                     log.info("async cache repository manager create scheduled executor");
                 }
             }

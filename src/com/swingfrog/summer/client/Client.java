@@ -48,12 +48,21 @@ public class Client {
 
 	public void connect() {
 		try {
-			log.info("client connect {}:{}", clientContext.getConfig().getAddress(), clientContext.getConfig().getPort());
+			log.info("client[{}] connect {}:{}", clientContext.getConfig().getServerName(), clientContext.getConfig().getAddress(), clientContext.getConfig().getPort());
 			Bootstrap b = new Bootstrap();
 			b.group(workerGroup).channel(NioSocketChannel.class).handler(new ClientInitializer(clientContext));
 			b.remoteAddress(clientContext.getConfig().getAddress(), clientContext.getConfig().getPort());
 			b.connect().addListener(new ConnectionListener());
 		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
+	}
+
+	public void shutdown() {
+		log.info("client[{}] shutdown", clientContext.getConfig().getServerName());
+		try {
+			workerGroup.shutdownGracefully().sync();
+		} catch (InterruptedException e) {
 			log.error(e.getMessage(), e);
 		}
 	}

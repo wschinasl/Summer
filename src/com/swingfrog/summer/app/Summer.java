@@ -2,7 +2,9 @@ package com.swingfrog.summer.app;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import com.swingfrog.summer.db.repository.AsyncCacheRepositoryMgr;
 import com.swingfrog.summer.db.repository.RepositoryMgr;
@@ -20,7 +22,7 @@ import com.swingfrog.summer.concurrent.SingleQueueMgr;
 import com.swingfrog.summer.concurrent.SynchronizedMgr;
 import com.swingfrog.summer.config.ConfigMgr;
 import com.swingfrog.summer.db.DataBaseMgr;
-import com.swingfrog.summer.event.EventMgr;
+import com.swingfrog.summer.event.EventBusMgr;
 import com.swingfrog.summer.ioc.ContainerMgr;
 import com.swingfrog.summer.loader.JarLoader;
 import com.swingfrog.summer.proxy.ProxyFactory;
@@ -37,8 +39,6 @@ import com.swingfrog.summer.task.TaskMgr;
 import com.swingfrog.summer.task.TaskTrigger;
 import com.swingfrog.summer.task.TaskUtil;
 import com.swingfrog.summer.web.WebMgr;
-
-import io.netty.channel.EventLoopGroup;
 
 public class Summer {
 	
@@ -67,7 +67,13 @@ public class Summer {
 	}
 	
 	public static void hot(SummerApp app, String projectPackage) throws Exception {
-		hot(app, projectPackage, "lib", "config/server.properties", "config/log.properties", "config/redis.properties", "config/db.properties", "config/task.properties");
+		hot(app, projectPackage,
+				"lib",
+				"config/server.properties",
+				"config/log.properties",
+				"config/redis.properties",
+				"config/db.properties",
+				"config/task.properties");
 	}
 	
 	public static void hot(SummerApp app, String projectPackage, String libPath,
@@ -86,9 +92,9 @@ public class Summer {
 		ContainerMgr.get().init(projectPackage);
 		ServerMgr.get().init();
 		ClientMgr.get().init();
-		EventMgr.get().init();
-		SessionQueueMgr.get().init(ServerMgr.get().getEventLoopGroup());
-		SingleQueueMgr.get().init(ServerMgr.get().getEventLoopGroup());
+		EventBusMgr.get().init();
+		SessionQueueMgr.get().init(ServerMgr.get().getEventExecutor());
+		SingleQueueMgr.get().init(ServerMgr.get().getEventExecutor());
 		ContainerMgr.get().autowired();
 		ContainerMgr.get().proxyObj();
 		app.init();
@@ -96,7 +102,7 @@ public class Summer {
 		log.info("summer launch...");
 		ContainerMgr.get().listDeclaredComponent(Lifecycle.class).stream()
 				.filter(l -> l.getInfo() != null)
-				.sorted((a, b) -> b.getInfo().getPriority() - a.getInfo().getPriority())
+				.sorted(Comparator.comparingInt(l -> -l.getInfo().getPriority()))
 				.forEach(l -> {
 					log.info("lifecycle [{}] start", l.getInfo().getName());
 					l.start();
@@ -107,17 +113,25 @@ public class Summer {
 		TaskMgr.get().startAll();
 		app.start();
 		Runtime.getRuntime().addShutdownHook(new Thread(()-> {
+			ClientMgr.get().shutdown();
+			ServerMgr.get().shutdown();
+			try {
+				TaskMgr.get().shutdownAll();
+			} catch (SchedulerException e) {
+				log.error(e.getMessage(), e);
+			}
 			app.stop();
 			ContainerMgr.get().listDeclaredComponent(Lifecycle.class).stream()
 					.filter(l -> l.getInfo() != null)
-					.sorted((a,b) -> a.getInfo().getPriority() - b.getInfo().getPriority())
+					.sorted(Comparator.comparingInt(l -> l.getInfo().getPriority()))
 					.forEach(l -> {
 						log.info("lifecycle [{}] stop", l.getInfo().getName());
 						l.stop();
 					});
+			EventBusMgr.get().shutdown();
 			AsyncCacheRepositoryMgr.get().shutdown();
 			RemoteStatistics.print();
-		}));
+		}, "shutdown"));
 	}
 	
 	public static void sync(String key, Runnable runnable) {
@@ -227,8 +241,8 @@ public class Summer {
 		ServerMgr.get().closeSession(sctx);
 	}
 	
-	public static EventLoopGroup getServerEventLoopGroup() {
-		return ServerMgr.get().getEventLoopGroup();
+	public static ExecutorService getServerEventExecutor() {
+		return ServerMgr.get().getEventExecutor();
 	}
 	
 	public static int getSessionQueueSize(SessionContext sctx) {
@@ -256,11 +270,11 @@ public class Summer {
 	}
 	
 	public static void syncDispatch(String eventName, Object ...args) {
-		EventMgr.get().syncDispatch(eventName, args);
+		EventBusMgr.get().syncDispatch(eventName, args);
 	}
 	
 	public static void asyncDispatch(String eventName, Object ...args) {
-		EventMgr.get().asyncDispatch(eventName, args);
+		EventBusMgr.get().asyncDispatch(eventName, args);
 	}
 	
 	public static WebMgr getWeb() {

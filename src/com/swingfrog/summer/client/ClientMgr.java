@@ -66,12 +66,25 @@ public class ClientMgr {
 	
 	public void connectAll() {
 		if (nameToCluster.size() > 0) {
-			log.info("clients connect");
+			log.info("clients connect...");
 			Iterator<ClientCluster> iteCluster = nameToCluster.values().iterator();
 			while (iteCluster.hasNext()) {
 				List<Client> clients = iteCluster.next().listClients();
 				for (int i = 0 ;i < clients.size(); i ++) {
 					clients.get(i).connect();
+				}
+			}
+		}
+	}
+
+	public void shutdown() {
+		if (nameToCluster.size() > 0) {
+			log.info("clients shutdown...");
+			Iterator<ClientCluster> iteCluster = nameToCluster.values().iterator();
+			while (iteCluster.hasNext()) {
+				List<Client> clients = iteCluster.next().listClients();
+				for (int i = 0 ;i < clients.size(); i ++) {
+					clients.get(i).shutdown();
 				}
 			}
 		}

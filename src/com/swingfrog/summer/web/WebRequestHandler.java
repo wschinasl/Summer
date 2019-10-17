@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.Calendar;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
 
 import com.swingfrog.summer.statistics.RemoteStatistics;
 import org.slf4j.Logger;
@@ -242,8 +243,8 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 	
 	private void doFile(ChannelHandlerContext ctx, SessionContext sctx, WebRequest request) {
 		log.debug("server request {} from {}", request.getPath(), sctx);
-		EventLoopGroup eventLoopGroup = serverContext.getEventGroup();
-		eventLoopGroup.execute(()->{
+		ExecutorService eventExecutor = serverContext.getEventExecutor();
+		eventExecutor.execute(()->{
 			try {
 				writeResponse(ctx, sctx, request, new FileView(WebMgr.get().getWebContentPath() + request.getPath()));
 			} catch (IOException e) {
@@ -298,11 +299,11 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 					if (ContainerMgr.get().isSessionQueue(method)) {
 						SessionQueueMgr.get().execute(sctx, event);
 					} else {
-						serverContext.getEventGroup().execute(event);
+						serverContext.getEventExecutor().execute(event);
 					}
 				}
 			} else {
-				serverContext.getEventGroup().execute(event);
+				serverContext.getEventExecutor().execute(event);
 			}
 		}
 	}

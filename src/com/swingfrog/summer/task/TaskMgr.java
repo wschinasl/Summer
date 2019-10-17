@@ -4,9 +4,12 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
 import org.quartz.impl.StdSchedulerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TaskMgr {
-	
+
+	private static final Logger log = LoggerFactory.getLogger(TaskMgr.class);
 	private SchedulerFactory schedulerFactory;
 	private Scheduler scheduler;
 	
@@ -23,16 +26,19 @@ public class TaskMgr {
 	}
 	
 	public void init(String fileName) throws SchedulerException {
+		log.info("task init");
 		schedulerFactory = new StdSchedulerFactory(fileName);
 		scheduler = schedulerFactory.getScheduler();
 	}
 	
 	public void startAll() throws SchedulerException {
+		log.info("task start all");
 		scheduler.start();
 	}
 	
 	
 	public void shutdownAll() throws SchedulerException {
+		log.info("task shutdown all");
 		scheduler.shutdown();
 	}
 	
