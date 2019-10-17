@@ -1,14 +1,8 @@
 package com.swingfrog.summer.server;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.swingfrog.summer.config.ServerConfig;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.util.concurrent.DefaultThreadFactory;
-
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class ServerContext {
 
