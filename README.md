@@ -186,6 +186,8 @@ testOnBorrow=false
 testOnReturn=false
 poolPreparedStatements=false
 maxPoolPreparedStatementPerConnectionSize=200
+
+asyncCache.coreThread=0
 ```
 
 ##### redis.properties (jedis配置文件)
