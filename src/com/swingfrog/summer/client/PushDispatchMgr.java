@@ -17,7 +17,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.swingfrog.summer.annotation.Optional;
 import com.swingfrog.summer.ioc.ContainerMgr;
-import com.swingfrog.summer.ioc.MehodParameterName;
+import com.swingfrog.summer.ioc.MethodParameterName;
 import com.swingfrog.summer.protocol.SessionResponse;
 
 import javassist.NotFoundException;
@@ -143,7 +143,7 @@ public class PushDispatchMgr {
 			Method[] methods = clazz.getDeclaredMethods();
 			for (int i = 0; i < methods.length; i++) {
 				Method method = methods[i];
-				pushMethodMap.put(method.getName(), new PushMethod(method, new MehodParameterName(clazz)));
+				pushMethodMap.put(method.getName(), new PushMethod(method, new MethodParameterName(clazz)));
 			}
 		}
 		public Class<?> getClazz() {
@@ -159,7 +159,7 @@ public class PushDispatchMgr {
 		private String[] params;
 		private Type[] paramTypes;
 		private Parameter[] parameters;
-		public PushMethod(Method method, MehodParameterName mpn) throws NotFoundException {
+		public PushMethod(Method method, MethodParameterName mpn) throws NotFoundException {
 			this.method = method;
 			paramTypes = method.getGenericParameterTypes();
 			params = mpn.getParameterNameByMethod(method);

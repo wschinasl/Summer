@@ -17,7 +17,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.swingfrog.summer.annotation.Optional;
 import com.swingfrog.summer.ioc.ContainerMgr;
-import com.swingfrog.summer.ioc.MehodParameterName;
+import com.swingfrog.summer.ioc.MethodParameterName;
 import com.swingfrog.summer.protocol.SessionRequest;
 import com.swingfrog.summer.protocol.SessionResponse;
 import com.swingfrog.summer.server.exception.CodeException;
@@ -180,7 +180,7 @@ public class RemoteDispatchMgr {
 			for (int i = 0; i < methods.length; i++) {
 				Method method = methods[i];
 				log.info("remote register {}.{}", clazz.getSimpleName(), method.getName());
-				remoteMethodMap.put(method.getName(), new RemoteMethod(method, new MehodParameterName(clazz)));
+				remoteMethodMap.put(method.getName(), new RemoteMethod(method, new MethodParameterName(clazz)));
 			}
 		}
 		public Class<?> getClazz() {
@@ -196,7 +196,7 @@ public class RemoteDispatchMgr {
 		private String[] params;
 		private Type[] paramTypes;
 		private Parameter[] parameters;
-		public RemoteMethod(Method method, MehodParameterName mpn) throws NotFoundException {
+		public RemoteMethod(Method method, MethodParameterName mpn) throws NotFoundException {
 			this.method = method;
 			paramTypes = method.getGenericParameterTypes();
 			params = mpn.getParameterNameByMethod(method);

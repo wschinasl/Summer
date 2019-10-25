@@ -12,7 +12,7 @@ import com.swingfrog.summer.client.exception.CreateRemoteFailException;
 import com.swingfrog.summer.concurrent.SynchronizedMgr;
 import com.swingfrog.summer.db.DataBaseMgr;
 import com.swingfrog.summer.ioc.ContainerMgr;
-import com.swingfrog.summer.ioc.MehodParameterName;
+import com.swingfrog.summer.ioc.MethodParameterName;
 import com.swingfrog.summer.redis.RedisMgr;
 
 public class ProxyUtil {
@@ -100,7 +100,7 @@ public class ProxyUtil {
 			@Override
 			public Object intercept(Object obj, Method method, Object[] args) throws Exception {
 				Map<String, Object> map = new HashMap<>();
-				MehodParameterName mpn = new MehodParameterName(obj.getClass());
+				MethodParameterName mpn = new MethodParameterName(obj.getClass());
 				String[] params = mpn.getParameterNameByMethod(method);
 				for (int i = 0; i < params.length; i ++) {
 					map.put(params[i], args[i]);
@@ -121,7 +121,7 @@ public class ProxyUtil {
 			@Override
 			public Object intercept(Object obj, Method method, Object[] args) throws Exception {
 				Map<String, Object> map = new HashMap<>();
-				MehodParameterName mpn = new MehodParameterName(obj.getClass());
+				MethodParameterName mpn = new MethodParameterName(obj.getClass());
 				String[] params = mpn.getParameterNameByMethod(method);
 				for (int i = 0; i < params.length; i ++) {
 					map.put(params[i], args[i]);
@@ -142,7 +142,7 @@ public class ProxyUtil {
 			@Override
 			public Object intercept(Object obj, Method method, Object[] args) throws Exception {
 				Map<String, Object> map = new HashMap<>();
-				MehodParameterName mpn = new MehodParameterName(obj.getClass());
+				MethodParameterName mpn = new MethodParameterName(obj.getClass());
 				String[] params = mpn.getParameterNameByMethod(method);
 				for (int i = 0; i < params.length; i ++) {
 					map.put(params[i], args[i]);
@@ -163,7 +163,7 @@ public class ProxyUtil {
 			@Override
 			public Object intercept(Object obj, Method method, Object[] args) throws Exception {
 				Map<String, Object> map = new HashMap<>();
-				MehodParameterName mpn = new MehodParameterName(obj.getClass());
+				MethodParameterName mpn = new MethodParameterName(obj.getClass());
 				String[] params = mpn.getParameterNameByMethod(method);
 				for (int i = 0; i < params.length; i ++) {
 					map.put(params[i], args[i]);
