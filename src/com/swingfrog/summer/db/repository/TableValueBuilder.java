@@ -142,4 +142,12 @@ public class TableValueBuilder {
         return list.toArray();
     }
 
+    public static Object[] listInsertValue(TableMeta tableMeta, Object obj, Object primaryKey) {
+        List<Object> list = tableMeta.getColumns().stream()
+                .map(columnMeta -> getColumnValue(columnMeta, obj))
+                .collect(Collectors.toList());
+        list.add(0, primaryKey);
+        return list.toArray();
+    }
+
 }

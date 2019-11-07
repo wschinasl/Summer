@@ -17,7 +17,7 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
 
     private static final Logger log = LoggerFactory.getLogger(AsyncCacheRepositoryDao.class);
 
-    private final ConcurrentLinkedQueue<Change<T>> waitChange = Queues.newConcurrentLinkedQueue();
+    private final ConcurrentLinkedQueue<Change<T, K>> waitChange = Queues.newConcurrentLinkedQueue();
     private final ConcurrentMap<T, Long> waitSave = Maps.newConcurrentMap();
     private long delayTime = delayTime();
 
@@ -38,23 +38,28 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
     }
 
     private synchronized void delay(boolean force) {
-        while (!waitChange.isEmpty()) {
-            Change<T> change = waitChange.poll();
-            if (change.add) {
-                delayAdd(change.obj);
-            } else {
-                delayRemove(change.obj);
+        try {
+            while (!waitChange.isEmpty()) {
+                Change<T, K> change = waitChange.poll();
+                if (change.add) {
+                    delayAdd(change.obj, change.pk);
+                } else {
+                    delayRemove(change.pk);
+                }
             }
+            delaySave(force);
+        } catch (Throwable e) {
+            log.error("AsyncCacheRepository delay failure.");
+            log.error(e.getMessage(), e);
         }
-        delaySave(force);
     }
 
-    private void delayAdd(T obj) {
-        super.addNotAutoIncrement(obj);
+    private void delayAdd(T obj, K primaryKey) {
+        super.addByPrimaryKey(obj, primaryKey);
     }
 
-    private void delayRemove(T obj) {
-        super.remove(obj);
+    private void delayRemove(K pk) {
+        super.removeByPrimaryKey(pk);
     }
 
     private void delaySave(boolean force) {
@@ -72,15 +77,21 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
     @Override
     public boolean add(T obj) {
         super.autoIncrementPrimaryKey(obj);
-        super.addCache(obj);
-        waitChange.add(new Change<>(obj, true));
+        K primaryKey = (K) TableValueBuilder.getPrimaryKeyValue(tableMeta, obj);
+        super.addCache(primaryKey, obj);
+        waitChange.add(new Change<>(obj, primaryKey));
         return true;
     }
 
     @Override
     public boolean remove(T obj) {
-        super.forceSetCacheEmpty(obj);
-        waitChange.add(new Change<>(obj, false));
+        return removeByPrimaryKey((K) TableValueBuilder.getPrimaryKeyValue(tableMeta, obj));
+    }
+
+    @Override
+    public boolean removeByPrimaryKey(K primaryKey) {
+        super.forceSetCacheEmptyByPrimaryKey(primaryKey);
+        waitChange.add(new Change<>(primaryKey));
         return true;
     }
 
@@ -103,12 +114,18 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
         objs.forEach(this::save);
     }
 
-    private static class Change<T> {
+    private static class Change<T, K> {
         T obj;
+        K pk;
         boolean add;
-        Change(T obj, boolean add) {
+        Change(T obj, K pk) {
             this.obj = obj;
-            this.add = add;
+            this.pk = pk;
+            this.add = true;
+        }
+        Change(K pk) {
+            this.pk = pk;
+            this.add = false;
         }
     }
 
@@ -118,6 +135,10 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
 
     public boolean syncRemove(T obj) {
         return super.remove(obj);
+    }
+
+    public boolean syncRemoveByPrimaryKey(K primaryKey) {
+        return super.removeByPrimaryKey(primaryKey);
     }
 
     public boolean syncSave(T obj) {

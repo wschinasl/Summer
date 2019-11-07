@@ -85,6 +85,12 @@ public abstract class RepositoryDao<T, K> extends BaseDao<T> {
         return update(insertSql, TableValueBuilder.listInsertValue(tableMeta, obj)) > 0;
     }
 
+    protected boolean addByPrimaryKey(T obj, K primaryKey) {
+        Objects.requireNonNull(obj, "repository add param not null");
+        Objects.requireNonNull(primaryKey, "repository add param not null");
+        return update(insertSql, TableValueBuilder.listInsertValue(tableMeta, obj, primaryKey)) > 0;
+    }
+
     protected void autoIncrementPrimaryKey(T obj) {
         Objects.requireNonNull(obj, "repository auto increment primary key param not null");
         if (isAutoIncrement()) {
@@ -101,6 +107,11 @@ public abstract class RepositoryDao<T, K> extends BaseDao<T> {
     public boolean remove(T obj) {
         Objects.requireNonNull(obj, "repository remove param not null");
         return update(deleteSql, TableValueBuilder.getPrimaryKeyValue(tableMeta, obj)) > 0;
+    }
+
+    public boolean removeByPrimaryKey(K primaryKey) {
+        Objects.requireNonNull(primaryKey, "repository remove param not null");
+        return update(deleteSql, primaryKey) > 0;
     }
 
     public boolean save(T obj) {
