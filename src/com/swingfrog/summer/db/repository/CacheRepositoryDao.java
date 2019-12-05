@@ -154,13 +154,13 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
 
     @Override
     public List<T> list(Map<String, Object> optional) {
-        LinkedList<List<K>> pkList = Lists.newLinkedList();
+        LinkedList<Set<K>> pkList = Lists.newLinkedList();
         Map<String, Object> normal = Maps.newHashMap();
-        optional.entrySet().forEach(entry -> {
-            if (tableMeta.getCacheKeys().contains(tableMeta.getColumnMetaMap().get(entry.getKey()))) {
-                pkList.add(listPrimaryValueByCacheKey(entry.getKey(), entry.getValue()));
+        optional.forEach((key, value) -> {
+            if (tableMeta.getCacheKeys().contains(tableMeta.getColumnMetaMap().get(key))) {
+                pkList.add(listPrimaryValueByCacheKey(key, value));
             } else {
-                normal.put(entry.getKey(), entry.getValue());
+                normal.put(key, value);
             }
         });
         List<T> list;
@@ -168,22 +168,20 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
             super.listPrimaryKey(optional).forEach(this::get);
             list = cache.asMap().values().stream()
                     .filter(obj -> obj != EMPTY)
-                    .sorted(Comparator.comparingInt(Objects::hashCode))
                     .collect(Collectors.toList());
         } else {
             if (pkList.size() == 1) {
-                list = pkList.get(0).stream().map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
+                list = pkList.getFirst().stream().map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
             } else {
-                List<K> first = pkList.removeFirst();
-                for (Iterator<K> iterator = first.iterator(); iterator.hasNext(); ) {
-                    Object obj = iterator.next();
-                    for (List<K> pk : pkList) {
+                Set<K> first = Sets.newHashSet(pkList.removeFirst());
+                first.removeIf(obj -> {
+                    for (Set<K> pk : pkList) {
                         if (!pk.contains(obj)) {
-                            iterator.remove();
-                            break;
+                            return true;
                         }
                     }
-                }
+                    return false;
+                });
                 list = first.stream().map(this::get).filter(Objects::nonNull).collect(Collectors.toList());
             }
         }
@@ -214,11 +212,10 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
         return cache.asMap().keySet().stream()
                 .map(this::get)
                 .filter(Objects::nonNull)
-                .sorted(Comparator.comparingInt(obj -> TableValueBuilder.getPrimaryKeyValue(tableMeta, obj).hashCode()))
                 .collect(Collectors.toList());
     }
 
-    protected List<K> listPrimaryValueByCacheKey(String column, Object cacheValue) {
+    protected Set<K> listPrimaryValueByCacheKey(String column, Object cacheValue) {
         Cache<Object, Set<K>> cachePk = cachePkMap.get(column);
         Set<K> pkSet = cachePk.getIfPresent(cacheValue);
         if (cachePkFinishMap.get(column).getIfPresent(cacheValue) == null || pkSet == null) {
@@ -232,7 +229,7 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
             cachePkFinishMap.get(column).put(cacheValue, true);
             pkSet.addAll(listPrimaryKey(ImmutableMap.of(column, cacheValue)));
         }
-        return pkSet.stream().sorted(Comparator.comparingInt(Objects::hashCode)).collect(Collectors.toList());
+        return pkSet;
     }
 
     protected void addCache(T obj) {
