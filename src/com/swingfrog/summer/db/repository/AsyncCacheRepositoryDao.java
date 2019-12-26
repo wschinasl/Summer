@@ -2,12 +2,14 @@ package com.swingfrog.summer.db.repository;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +22,7 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
     private final ConcurrentLinkedQueue<Change<T, K>> waitChange = Queues.newConcurrentLinkedQueue();
     private final ConcurrentMap<T, Long> waitSave = Maps.newConcurrentMap();
     private long delayTime = delayTime();
+    private final Set<K> waitAdd = Sets.newConcurrentHashSet();
 
     protected abstract long delayTime();
 
@@ -55,11 +58,13 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
     }
 
     private void delayAdd(T obj, K primaryKey) {
-        super.addByPrimaryKey(obj, primaryKey);
+        if (waitAdd.remove(primaryKey)) {
+            super.addByPrimaryKeyNotAddCache(obj, primaryKey);
+        }
     }
 
     private void delayRemove(K pk) {
-        super.removeByPrimaryKey(pk);
+        super.removeByPrimaryKeyNotRemoveCache(pk);
     }
 
     private void delaySave(boolean force) {
@@ -79,6 +84,7 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
         super.autoIncrementPrimaryKey(obj);
         K primaryKey = (K) TableValueBuilder.getPrimaryKeyValue(tableMeta, obj);
         super.addCache(primaryKey, obj);
+        waitAdd.add(primaryKey);
         waitChange.add(new Change<>(obj, primaryKey));
         return true;
     }
@@ -90,7 +96,10 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
 
     @Override
     public boolean removeByPrimaryKey(K primaryKey) {
-        super.forceSetCacheEmptyByPrimaryKey(primaryKey);
+        super.removeCacheByPrimaryKey(primaryKey);
+        if (waitAdd.remove(primaryKey)) {
+            return true;
+        }
         waitChange.add(new Change<>(primaryKey));
         return true;
     }

@@ -236,16 +236,6 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
         addCache((K) TableValueBuilder.getPrimaryKeyValue(tableMeta, obj), obj);
     }
 
-    protected void forceSetCacheEmpty(T obj) {
-        forceSetCacheEmptyByPrimaryKey((K) TableValueBuilder.getPrimaryKeyValue(tableMeta, obj));
-    }
-
-    protected void forceSetCacheEmptyByPrimaryKey(K primaryKey) {
-        synchronized (StringUtil.getString(PREFIX, tableMeta.getName(), "addCache", primaryKey)) {
-            cache.put(primaryKey, EMPTY);
-        }
-    }
-
     protected void addCache(K primaryKey, T obj) {
         synchronized (StringUtil.getString(PREFIX, tableMeta.getName(), "addCache", primaryKey)) {
             T old = cache.getIfPresent(primaryKey);
@@ -279,11 +269,27 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
     }
 
     protected void removeCacheByPrimaryKey(K primaryKey) {
-        cache.invalidate(primaryKey);
-        tableMeta.getCacheKeys().forEach(columnMeta -> {
-            cachePkMap.get(columnMeta.getName()).invalidateAll();
-            cachePkFinishMap.get(columnMeta.getName()).invalidateAll();
-        });
+        synchronized (StringUtil.getString(PREFIX, tableMeta.getName(), "addCache", primaryKey)) {
+            cache.put(primaryKey, EMPTY);
+        }
+    }
+
+    protected boolean addByPrimaryKeyNotAddCache(T obj, K primaryKey) {
+        boolean ok = super.addByPrimaryKey(obj, primaryKey);
+        if (!ok) {
+            log.error("CacheRepository addByPrimaryKeyNotAddCache failure.");
+            log.error("{} {}", obj.toString(), primaryKey.toString());
+        }
+        return ok;
+    }
+
+    public boolean removeByPrimaryKeyNotRemoveCache(K primaryKey) {
+        boolean ok = super.removeByPrimaryKey(primaryKey);
+        if (!ok) {
+            log.error("CacheRepository removeByPrimaryKeyNotRemoveCache failure.");
+            log.error(primaryKey.toString());
+        }
+        return ok;
     }
 
 }
