@@ -267,7 +267,7 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 						writeResponse(ctx, sctx, request, webView);
 					}
 				} catch (CodeException ce) {
-					log.error(ce.getMessage(), ce);
+					log.warn(ce.getMessage(), ce);
 					WebView webView = WebMgr.get().getInteriorViewFactory().createErrorView(500, ce.getCode(), ce.getMsg());
 					writeResponse(ctx, sctx, request, webView);
 				} catch (Throwable e) {
