@@ -91,9 +91,6 @@
 JDK 1.8 以上<br/>
 MySql 5.7 (仅供参考)<br/>
 Redis 5.0 (仅供参考)<br/>
-IDE: eclipse (仅供参考)<br/>
-将SummerServer库添加至UserLibraries
-
 
 ## 快捷上手
 ### 创建项目
