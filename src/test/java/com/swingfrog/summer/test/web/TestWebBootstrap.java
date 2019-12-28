@@ -1,10 +1,18 @@
 package com.swingfrog.summer.test.web;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.ImmutableMap;
 import com.swingfrog.summer.app.Summer;
 import com.swingfrog.summer.app.SummerApp;
 import com.swingfrog.summer.app.SummerConfig;
 import com.swingfrog.summer.web.WebMgr;
+import com.swingfrog.summer.web.view.InteriorViewFactory;
+import com.swingfrog.summer.web.view.JSONView;
+import com.swingfrog.summer.web.view.WebView;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Map;
 
 @Slf4j
 public class TestWebBootstrap implements SummerApp {
@@ -36,6 +44,23 @@ public class TestWebBootstrap implements SummerApp {
                 .build());
         WebMgr.get().setTemplatePath(resources + "/Template");
         WebMgr.get().setWebContentPath(resources + "/WebContent");
+        WebMgr.get().setInteriorViewFactory(new InteriorViewFactory() {
+            @Override
+            public WebView createErrorView(int status, String msg) {
+                JSONObject json = new JSONObject();
+                json.put("status", status);
+                json.put("msg", msg);
+                return new JSONView(json);
+            }
+            @Override
+            public WebView createErrorView(int status, long code, String msg) {
+                JSONObject json = new JSONObject();
+                json.put("status", status);
+                json.put("code", code);
+                json.put("msg", msg);
+                return new JSONView(json);
+            }
+        });
 
         // http://127.0.0.1:8080/TestRemote_hello
         // http://127.0.0.1:8080/TestRemote_add?a=1&b=2
