@@ -93,29 +93,19 @@ MySql 5.7 (仅供参考)<br/>
 Redis 5.0 (仅供参考)<br/>
 IDE: eclipse (仅供参考)<br/>
 将SummerServer库添加至UserLibraries
-#### SummerServer库
-asm-6.2.jar<br/>
-cglib-3.2.7.jar<br/>
-commons-dbutils-1.7.jar<br/>
-commons-pool2-2.4.2.jar<br/>
-druid-1.1.10.jar<br/>
-fastjson-1.2.47.jar<br/>
-freemarker-2.3.23.jar<br/>
-javassist-3.22.0-GA.jar<br/>
-jedis-2.9.0.jar<br/>
-log4j-1.2.17.jar<br/>
-mysql-connector-java-5.1.20-bin.jar<br/>
-netty-all-4.1.23.Final.jar<br/>
-quartz-2.3.0.jar<br/>
-slf4j-api-1.7.25.jar<br/>
-slf4j-log4j12-1.7.25.jar<br/>
-guava-28.0-jre.jar<br/>
-lombok-1.18.8.jar<br/>
+
 
 ## 快捷上手
 ### 创建项目
-1. 创建普通的java project项目
-2. 为当前项目添加SummerServer库
+1. 创建mvn项目
+2. 添加summer到pom.xml
+```
+    <dependency>
+        <groupId>com.swingfrog.summer</groupId>
+        <artifactId>summer</artifactId>
+        <version>1.0.1</version>
+    </dependency>
+```
 
 ### 项目结构
 - src
