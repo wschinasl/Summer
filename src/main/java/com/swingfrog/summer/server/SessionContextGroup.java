@@ -38,8 +38,8 @@ public class SessionContextGroup {
 		return channelToSessionMap.get(ctx);
 	}
 	
-	public ChannelHandlerContext getChannelBySession(SessionContext ctx) {
-		return sessionToChannelMap.get(ctx);
+	public ChannelHandlerContext getChannelBySession(SessionContext sctx) {
+		return sessionToChannelMap.get(sctx);
 	}
 	
 	public Iterator<SessionContext> iteratorSession() {

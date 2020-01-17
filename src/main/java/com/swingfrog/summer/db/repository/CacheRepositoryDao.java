@@ -283,7 +283,7 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
         return ok;
     }
 
-    public boolean removeByPrimaryKeyNotRemoveCache(K primaryKey) {
+    protected boolean removeByPrimaryKeyNotRemoveCache(K primaryKey) {
         boolean ok = super.removeByPrimaryKey(primaryKey);
         if (!ok) {
             log.error("CacheRepository removeByPrimaryKeyNotRemoveCache failure.");

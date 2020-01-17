@@ -10,7 +10,6 @@ import com.swingfrog.summer.db.repository.AsyncCacheRepositoryMgr;
 import com.swingfrog.summer.db.repository.RepositoryMgr;
 import com.swingfrog.summer.lifecycle.Lifecycle;
 import com.swingfrog.summer.statistics.RemoteStatistics;
-import org.apache.log4j.PropertyConfigurator;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,16 +77,13 @@ public class Summer {
 				config.getProjectPackage() == null ? config.getApp().getClass().getPackage().getName() : config.getProjectPackage(),
 				config.getLibPath() == null ? "lib" : config.getLibPath(),
 				config.getServerProperties() == null ? "config/server.properties" : config.getServerProperties(),
-				config.getLogProperties() == null ? "config/log.properties" : config.getLogProperties(),
 				config.getRedisProperties() == null ? "config/redis.properties" : config.getRedisProperties(),
 				config.getDbProperties() == null ? "config/db.properties" : config.getDbProperties(),
 				config.getTaskProperties() == null ? "config/task.properties" : config.getTaskProperties());
 	}
 
 	public static void hot(SummerApp app, String projectPackage, String libPath,
-			String serverProperties, String logProperties, 
-			String redisProperties, String dbProperties, String taskProperties) throws Exception {
-		PropertyConfigurator.configure(logProperties);
+			String serverProperties, String redisProperties, String dbProperties, String taskProperties) throws Exception {
 		logo();
 		log.info("summer init...");
 		JarLoader.loadJarByDir(new File(libPath));

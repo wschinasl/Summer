@@ -23,6 +23,11 @@
 
 
 ## 更新
+### 2020.01.17
+1. 日志调整，由原来的log4j改为logback，并且移除直接调用log4j的所有代码，完成了日志解耦，可自由替换成slf4j的其他实现。
+2. 由于不再强制加载日志配置文件，Summer.hot移除了日志配置文件路径的参数。
+3. Remote新增异步响应请求，可参考test中的例子。
+
 ### 2019.12.27
 使用mvn重构项目
 
@@ -100,7 +105,7 @@ Redis 5.0 (仅供参考)<br/>
     <dependency>
         <groupId>com.swingfrog.summer</groupId>
         <artifactId>summer</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.3</version>
     </dependency>
 ```
 

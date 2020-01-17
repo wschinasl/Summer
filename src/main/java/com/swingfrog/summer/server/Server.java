@@ -182,5 +182,9 @@ public class Server {
 	public EventLoopGroup getWorkerGroup() {
 		return workerGroup;
 	}
+
+	public ServerContext getServerContext() {
+		return serverContext;
+	}
 	
 }

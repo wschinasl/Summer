@@ -9,6 +9,7 @@ import java.util.Calendar;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
+import com.swingfrog.summer.server.async.ProcessResult;
 import com.swingfrog.summer.statistics.RemoteStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -258,7 +259,11 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 			RemoteStatistics.start(request, 0);
 			Runnable event = ()-> {
 				try {
-					WebView webView = RemoteDispatchMgr.get().webProcess(serverContext, request, sctx);
+					ProcessResult<WebView> processResult = RemoteDispatchMgr.get().webProcess(serverContext, request, sctx);
+					if (processResult.isAsync()) {
+						return;
+					}
+					WebView webView = processResult.getValue();
 					if (webView == null) {
 						writeResponse(ctx, sctx, request, WebMgr.get().getInteriorViewFactory().createBlankView());
 					} else {
@@ -306,9 +311,13 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 			}
 		}
 	}
-	
-	public void writeResponse(ChannelHandlerContext ctx, SessionContext sctx, WebRequest request, WebView webView) {
+
+	private void writeResponse(ChannelHandlerContext ctx, SessionContext sctx, WebRequest request, WebView webView) {
 		log.debug("server response {} status[{}] from {}", webView, webView.getStatus(), sctx);
+		write(ctx, sctx, request, webView);
+	}
+
+	public static void write(ChannelHandlerContext ctx, SessionContext sctx, WebRequest request, WebView webView) {
 		try {
 			DefaultHttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, 
 					HttpResponseStatus.valueOf(webView.getStatus()));
@@ -333,11 +342,11 @@ public class WebRequestHandler extends SimpleChannelInboundHandler<HttpObject> {
 		}
 	}
 
-	private String createSessionId() {
+	private static String createSessionId() {
 		return "sessionId=" + UUID.randomUUID().toString().replace("-", "").toLowerCase();
 	}
 
-	private String parseSessionId(String cookie) {
+	private static String parseSessionId(String cookie) {
 		if (cookie == null)
 			return null;
 		String sessionId = "sessionId=";

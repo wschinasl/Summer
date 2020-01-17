@@ -1,6 +1,8 @@
 package com.swingfrog.summer.server;
 
 import com.google.common.collect.Queues;
+import com.swingfrog.summer.protocol.SessionRequest;
+import com.swingfrog.summer.server.async.AsyncResponseMgr;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -67,5 +69,8 @@ public class SessionContext {
 	@Override
 	public String toString() {
 		return String.format("IP[%s:%s]", address, port);
+	}
+	public void send(SessionRequest request, Object data) {
+		AsyncResponseMgr.get().sendResponse(this, request, data);
 	}
 }

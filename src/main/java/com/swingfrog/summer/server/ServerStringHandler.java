@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.Calendar;
 
+import com.swingfrog.summer.server.async.ProcessResult;
 import com.swingfrog.summer.statistics.RemoteStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,21 +108,25 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 								return;
 							}
 							try {
-								String response = RemoteDispatchMgr.get().process(serverContext, request, sctx).toJSONString();
+								ProcessResult<SessionResponse> processResult = RemoteDispatchMgr.get().process(serverContext, request, sctx);
+								if (processResult.isAsync()) {
+									return;
+								}
+								String response = processResult.getValue().toJSONString();
 								log.debug("server response {} to {}", response, sctx);
-								write(ctx, sctx, response);
+								writeResponse(ctx, sctx, response);
 								RemoteStatistics.finish(request, response.length());
 							} catch (CodeException ce) {
 								log.warn(ce.getMessage(), ce);
 								String response = SessionResponse.buildError(request, ce).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
-								write(ctx, sctx, response);
+								writeResponse(ctx, sctx, response);
 								RemoteStatistics.finish(request, response.length());
 							} catch (Throwable e) {
 								log.error(e.getMessage(), e);
 								String response = SessionResponse.buildError(request, SessionException.INVOKE_ERROR).toJSONString();
 								log.debug("server response error {} to {}", response, sctx);
-								write(ctx, sctx, response);
+								writeResponse(ctx, sctx, response);
 								RemoteStatistics.finish(request, response.length());
 							}
 						};
@@ -183,7 +188,12 @@ public class ServerStringHandler extends SimpleChannelInboundHandler<String> {
 		}
 	}
 
-	private void write(ChannelHandlerContext ctx, SessionContext sctx, String response) {
+
+	private void writeResponse(ChannelHandlerContext ctx, SessionContext sctx, String response) {
+		write(ctx, serverContext, sctx, response);
+	}
+
+	public static void write(ChannelHandlerContext ctx, ServerContext serverContext, SessionContext sctx, String response) {
 		if (!ctx.channel().isActive()) {
 			return;
 		}

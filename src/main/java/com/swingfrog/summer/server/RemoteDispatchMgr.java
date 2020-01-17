@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.swingfrog.summer.annotation.Remote;
+import com.swingfrog.summer.server.async.AsyncResponse;
+import com.swingfrog.summer.server.async.ProcessResult;
 import com.swingfrog.summer.util.JSONConvertUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,34 +139,42 @@ public class RemoteDispatchMgr {
 		}
 	}
 	
-	public SessionResponse process(ServerContext serverContext, SessionRequest req, SessionContext sctx) throws Throwable {
+	public ProcessResult<SessionResponse> process(ServerContext serverContext, SessionRequest req, SessionContext sctx) throws Throwable {
 		String remote = req.getRemote();
 		String method = req.getMethod();
 		JSONObject data = req.getData();
 		Map<Class<?>, Object> autoObj = new HashMap<>();
 		autoObj.put(SessionContext.class, sctx);
-		return SessionResponse.buildMsg(req, invoke(serverContext, remote, method, data, autoObj, null));
+		autoObj.put(SessionRequest.class, req);
+		Object result = invoke(serverContext, remote, method, data, autoObj, null);
+		if (result instanceof AsyncResponse) {
+			return new ProcessResult<>(true, null);
+		}
+		return new ProcessResult<>(false, SessionResponse.buildMsg(req, result));
 	}
 	
-	public WebView webProcess(ServerContext serverContext, WebRequest req, SessionContext sctx) throws Throwable {
+	public ProcessResult<WebView> webProcess(ServerContext serverContext, WebRequest req, SessionContext sctx) throws Throwable {
 		String remote = req.getRemote();
 		String method = req.getMethod();
 		JSONObject data = req.getData();
 		Map<Class<?>, Object> autoObj = new HashMap<>();
 		autoObj.put(SessionContext.class, sctx);
+		autoObj.put(SessionRequest.class, req);
 		Map<String, Object> autoNameObj = new HashMap<>();
 		for (String key : req.getFileUploadMap().keySet()) {
 			autoNameObj.put(key, req.getFileUploadMap().get(key));
 		}
-		Object obj = invoke(serverContext, remote, method, data, autoObj, autoNameObj);
-		if (obj == null) {
-			return null;
+		Object result = invoke(serverContext, remote, method, data, autoObj, autoNameObj);
+		if (result instanceof AsyncResponse) {
+			return new ProcessResult<>(true, null);
 		}
-		if (obj instanceof WebView) {
-			return (WebView) obj;
-		} else {
-			return new TextView(JSON.toJSONString(obj));
+		if (result == null) {
+			return new ProcessResult<>(false, null);
 		}
+		if (result instanceof WebView) {
+			return new ProcessResult<>(false, (WebView) result);
+		}
+		return new ProcessResult<>(false, new TextView(JSON.toJSONString(result)));
 	}
 	
 	private class RemoteClass {

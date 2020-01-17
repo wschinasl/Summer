@@ -28,7 +28,6 @@ public class TestSlaveBootstrap implements SummerApp {
         Summer.hot(SummerConfig.newBuilder()
                 .app(new TestSlaveBootstrap())
                 .dbProperties(resources + "/db.properties")
-                .logProperties(resources + "/log.properties")
                 .redisProperties(resources + "/redis.properties")
                 .serverProperties(resources + "/server.properties")
                 .taskProperties(resources + "/task.properties")

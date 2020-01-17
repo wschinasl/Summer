@@ -6,7 +6,6 @@ public class SummerConfig {
     private String projectPackage;
     private String libPath;
     private String serverProperties;
-    private String logProperties;
     private String redisProperties;
     private String dbProperties;
     private String taskProperties;
@@ -43,14 +42,6 @@ public class SummerConfig {
         this.serverProperties = serverProperties;
     }
 
-    public String getLogProperties() {
-        return logProperties;
-    }
-
-    public void setLogProperties(String logProperties) {
-        this.logProperties = logProperties;
-    }
-
     public String getRedisProperties() {
         return redisProperties;
     }
@@ -84,7 +75,6 @@ public class SummerConfig {
         private String projectPackage;
         private String libPath;
         private String serverProperties;
-        private String logProperties;
         private String redisProperties;
         private String dbProperties;
         private String taskProperties;
@@ -111,11 +101,6 @@ public class SummerConfig {
             return this;
         }
 
-        public Builder logProperties(String logProperties) {
-            this.logProperties = logProperties;
-            return this;
-        }
-
         public Builder redisProperties(String redisProperties) {
             this.redisProperties = redisProperties;
             return this;
@@ -137,7 +122,6 @@ public class SummerConfig {
             summerConfig.setProjectPackage(projectPackage);
             summerConfig.setLibPath(libPath);
             summerConfig.setServerProperties(serverProperties);
-            summerConfig.setLogProperties(logProperties);
             summerConfig.setRedisProperties(redisProperties);
             summerConfig.setDbProperties(dbProperties);
             summerConfig.setTaskProperties(taskProperties);

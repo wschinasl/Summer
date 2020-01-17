@@ -1,5 +1,6 @@
 package com.swingfrog.summer.server;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -13,7 +14,6 @@ import com.swingfrog.summer.config.ConfigMgr;
 import com.swingfrog.summer.config.ServerConfig;
 import com.swingfrog.summer.ioc.ContainerMgr;
 
-import io.netty.channel.EventLoopGroup;
 import javassist.NotFoundException;
 
 public class ServerMgr {
@@ -103,6 +103,16 @@ public class ServerMgr {
 	
 	public ExecutorService getEventExecutor(String serverName) {
 		return serverMap.get(serverName).getEventExecutor();
+	}
+
+	public Server findServer(SessionContext sctx) {
+		if (server.getServerContext().getSessionContextGroup().getChannelBySession(sctx) != null) {
+			return server;
+		}
+		return serverMap.values().stream()
+				.filter(ser -> ser.getServerContext().getSessionContextGroup().getChannelBySession(sctx) != null)
+				.findAny()
+				.orElse(null);
 	}
 	
 }

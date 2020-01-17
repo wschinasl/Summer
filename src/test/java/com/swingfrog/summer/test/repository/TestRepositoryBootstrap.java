@@ -28,7 +28,6 @@ public class TestRepositoryBootstrap implements SummerApp {
         Summer.hot(SummerConfig.newBuilder()
                 .app(new TestRepositoryBootstrap())
                 .dbProperties(resources + "/db.properties")
-                .logProperties(resources + "/log.properties")
                 .redisProperties(resources + "/redis.properties")
                 .serverProperties(resources + "/server.properties")
                 .taskProperties(resources + "/task.properties")

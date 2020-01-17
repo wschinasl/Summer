@@ -37,7 +37,6 @@ public class TestWebBootstrap implements SummerApp {
         Summer.hot(SummerConfig.newBuilder()
                 .app(new TestWebBootstrap())
                 .dbProperties(resources + "/db.properties")
-                .logProperties(resources + "/log.properties")
                 .redisProperties(resources + "/redis.properties")
                 .serverProperties(resources + "/server.properties")
                 .taskProperties(resources + "/task.properties")
@@ -67,6 +66,7 @@ public class TestWebBootstrap implements SummerApp {
         // http://127.0.0.1:8080/TestRemote_say?msg=hi
         // http://127.0.0.1:8080/TestRemote_template?msg=hi
         // http://127.0.0.1:8080/upload.html
+        // http://127.0.0.1:8080/TestRemote_asyncHello
     }
 
 }
