@@ -3,6 +3,7 @@
 /package/
 /logs/
 /test/
+/statistics/
 
 *.iml
 -----

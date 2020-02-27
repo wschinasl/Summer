@@ -99,8 +99,10 @@ public class ServerPush {
 			log.debug("server push to {} {}", sessionContexts, msg);
 			for (int i = 0; i < sessionContexts.size(); i++) {
 				ChannelHandlerContext ctx = group.getChannelBySession(sessionContexts.get(i));
-				SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
-				write(ctx, sctx, msg);
+				if (ctx != null) {
+					SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+					write(ctx, sctx, msg);
+				}
 			}
 		});
 	}
@@ -111,8 +113,10 @@ public class ServerPush {
 		log.debug("server push to {} {}", sessionContexts, msg);
 		for (int i = 0; i < sessionContexts.size(); i++) {
 			ChannelHandlerContext ctx = group.getChannelBySession(sessionContexts.get(i));
-			SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
-			write(ctx, sctx, msg);
+			if (ctx != null) {
+				SessionContext sctx = serverContext.getSessionContextGroup().getSessionByChannel(ctx);
+				write(ctx, sctx, msg);
+			}
 		}
 	}
 
