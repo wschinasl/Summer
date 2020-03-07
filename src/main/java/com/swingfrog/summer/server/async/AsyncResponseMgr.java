@@ -8,6 +8,8 @@ import com.swingfrog.summer.server.ServerConst;
 import com.swingfrog.summer.server.ServerMgr;
 import com.swingfrog.summer.server.ServerStringHandler;
 import com.swingfrog.summer.server.SessionContext;
+import com.swingfrog.summer.server.exception.CodeException;
+import com.swingfrog.summer.server.exception.SessionException;
 import com.swingfrog.summer.statistics.RemoteStatistics;
 import com.swingfrog.summer.web.WebMgr;
 import com.swingfrog.summer.web.WebRequest;
@@ -19,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class AsyncResponseMgr {
 
@@ -34,6 +37,31 @@ public class AsyncResponseMgr {
 
     public static AsyncResponseMgr get() {
         return AsyncResponseMgr.SingleCase.INSTANCE;
+    }
+
+    public void process(SessionContext sctx, SessionRequest request, Supplier<Object> runnable) {
+        try {
+            sendResponse(sctx, request, runnable.get());
+        } catch (CodeException ce) {
+            log.warn(ce.getMessage(), ce);
+            sendErrorResponse(sctx, request, ce);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            sendErrorResponse(sctx, request, e);
+        }
+    }
+
+    public void process(SessionContext sctx, SessionRequest request, Runnable runnable) {
+        try {
+            runnable.run();
+            sendResponse(sctx, request, null);
+        } catch (CodeException ce) {
+            log.warn(ce.getMessage(), ce);
+            sendErrorResponse(sctx, request, ce);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            sendErrorResponse(sctx, request, e);
+        }
     }
 
     public void sendResponse(SessionContext sctx, SessionRequest request, Object data) {
@@ -72,6 +100,44 @@ public class AsyncResponseMgr {
             ServerStringHandler.write(ctx, server.getServerContext(), sctx, response);
             RemoteStatistics.finish(request, response.length());
         }
+    }
+
+    public void sendErrorResponse(SessionContext sctx, SessionRequest request, CodeException ce) {
+        Objects.requireNonNull(sctx);
+        Objects.requireNonNull(request);
+        Server server = ServerMgr.get().findServer(sctx);
+        if (server == null) {
+            log.error("Async send response failure. cause: can't found server by session context");
+            return;
+        }
+        if (ServerConst.SERVER_PROTOCOL_HTTP.equals(server.getServerContext().getConfig().getProtocol())) {
+            log.error("Http protocol can't send error response");
+            return;
+        }
+        ChannelHandlerContext ctx = server.getServerContext().getSessionContextGroup().getChannelBySession(sctx);
+        String response = SessionResponse.buildError(request, ce).toJSONString();
+        log.debug("server async response error {} to {}", response, sctx);
+        ServerStringHandler.write(ctx, server.getServerContext(), sctx, response);
+        RemoteStatistics.finish(request, response.length());
+    }
+
+    public void sendErrorResponse(SessionContext sctx, SessionRequest request, Exception e) {
+        Objects.requireNonNull(sctx);
+        Objects.requireNonNull(request);
+        Server server = ServerMgr.get().findServer(sctx);
+        if (server == null) {
+            log.error("Async send response failure. cause: can't found server by session context");
+            return;
+        }
+        if (ServerConst.SERVER_PROTOCOL_HTTP.equals(server.getServerContext().getConfig().getProtocol())) {
+            log.error("Http protocol can't send error response");
+            return;
+        }
+        ChannelHandlerContext ctx = server.getServerContext().getSessionContextGroup().getChannelBySession(sctx);
+        String response = SessionResponse.buildError(request, SessionException.INVOKE_ERROR).toJSONString();
+        log.debug("server async response error {} to {}", response, sctx);
+        ServerStringHandler.write(ctx, server.getServerContext(), sctx, response);
+        RemoteStatistics.finish(request, response.length());
     }
 
 }
