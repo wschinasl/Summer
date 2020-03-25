@@ -22,7 +22,6 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
     private static final String PREFIX = "CacheRepositoryDao";
     private T EMPTY;
     private final Cache<K, T> cache = CacheBuilder.newBuilder()
-            .maximumSize(maxSize())
             .expireAfterAccess(expireTime(), TimeUnit.MILLISECONDS)
             .build();
     private final Map<String, Cache<Object, Set<K>>> cachePkMap = Maps.newHashMap();
@@ -31,7 +30,6 @@ public abstract class CacheRepositoryDao<T, K> extends RepositoryDao<T, K> {
     private final long expireTime = expireTime();
 
     protected abstract long expireTime();
-    protected abstract long maxSize();
 
     @Override
     void init() {

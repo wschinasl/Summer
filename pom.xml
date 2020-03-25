@@ -6,7 +6,7 @@
 
     <groupId>com.swingfrog.summer</groupId>
     <artifactId>summer</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
     <packaging>jar</packaging>
 
 
@@ -99,7 +99,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
-            <version>1.2.62</version>
+            <version>1.2.67</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.javassist/javassist -->

@@ -58,7 +58,7 @@ public class AsyncCacheRepositoryMgr {
                 log.error(e.getMessage(), e);
             }
         }
-        hooks.forEach(Runnable::run);
+        triggerHook();
     }
 
     public ScheduledExecutorService getScheduledExecutor() {
@@ -77,6 +77,10 @@ public class AsyncCacheRepositoryMgr {
 
     public void addHook(Runnable hook) {
         hooks.add(hook);
+    }
+
+    public void triggerHook() {
+        hooks.forEach(Runnable::run);
     }
 
 }

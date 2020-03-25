@@ -76,7 +76,8 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
         if (!list.isEmpty()) {
             super.save(list);
         }
-        list.forEach(waitSave::remove);
+        list.stream().filter(k -> force || time - waitSave.get(k) >= delayTime).forEach(waitSave::remove);
+        log.info("async cache repository table[{}] delay save nowSaveCount[{}] waitSaveCount[{}]", tableMeta.getName(), list.size(), waitSave.size());
     }
 
     @Override
@@ -113,8 +114,7 @@ public abstract class AsyncCacheRepositoryDao<T, K> extends CacheRepositoryDao<T
             log.warn("async cache repository table[{}] primary key[{}] expire, can't save", tableMeta.getName(), pk);
             return false;
         }
-        long time = System.currentTimeMillis();
-        waitSave.put(obj, time);
+        waitSave.computeIfAbsent(obj, k -> System.currentTimeMillis());
         return true;
     }
 

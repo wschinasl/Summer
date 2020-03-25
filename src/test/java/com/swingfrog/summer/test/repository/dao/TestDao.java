@@ -17,9 +17,4 @@ public class TestDao extends AsyncCacheRepositoryDao<Test, Long> {
         return 1000000;
     }
 
-    @Override
-    protected long maxSize() {
-        return 10000;
-    }
-
 }
